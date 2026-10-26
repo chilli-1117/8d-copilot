@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8D Copilot · MVP V0.2（PRD v3.1）</title>
+<style>
+:root{
+  --navy:#1F3A5F;--navy2:#2E4F73;--ink:#172033;--text:#263244;--muted:#6B7A8C;
+  --gold:#B98A3E;--gold2:#E6CFA1;--goldbg:#FBF5E9;
+  --bg:#F1F4F8;--card:#FFFFFF;--line:#DFE5ED;--line2:#EBEFF5;
+  --red:#B23B3B;--redbg:#FBEDED;--amber:#966216;--amberbg:#FCF4E3;
+  --green:#2C7357;--greenbg:#EAF5EF;--blue:#2E5E8C;--bluebg:#EDF4FB;
+  --shadow:0 1px 2px rgba(23,32,51,.04),0 8px 24px rgba(23,32,51,.045);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",system-ui,-apple-system,sans-serif;
+  font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0 0 auto 0;height:360px;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 320px at 16% -10%,rgba(31,58,95,.10),transparent 70%),
+             radial-gradient(700px 260px at 88% -20%,rgba(185,138,62,.10),transparent 70%);
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+h1,h2,h3,h4,p{margin:0}
+b,strong{font-weight:700}
+::selection{background:rgba(185,138,62,.24)}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topbar-inner{max-width:1160px;margin:0 auto;height:64px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;min-width:max-content}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(145deg,#D8B877,#B98A3E);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800;letter-spacing:.3px;box-shadow:0 4px 12px rgba(185,138,62,.28)}
+.brand-text{display:flex;flex-direction:column;line-height:1.2}
+.brand-text b{font-size:17px;color:var(--navy);letter-spacing:.2px}
+.brand-text small{font-size:10px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase}
+.top-actions{display:flex;align-items:center;gap:8px}
+.pill{font-size:11px;color:var(--muted);border:1px solid var(--line);background:#F8FAFC;border-radius:99px;padding:5px 10px;white-space:nowrap}
+.pill.ai-on{color:var(--green);background:var(--greenbg);border-color:#CFE5D9;cursor:pointer}
+.pill.ai-off{cursor:pointer}
+.pill.ai-busy{color:var(--amber);background:var(--amberbg);border-color:#EAD9B6}
+.rec-btn{border:1px solid var(--line);background:#fff;border-radius:9px;height:32px;padding:0 11px;color:var(--text);font-size:12px;display:inline-flex;align-items:center;gap:6px}
+.rec-btn b{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:var(--navy);color:#fff;font-size:11px;line-height:1}
+.rec-btn:hover{border-color:#C7D2E0;background:#FAFBFD}
+
+/* layout */
+.workspace{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:26px 24px 80px}
+.report-head{margin:2px 0 16px}
+.rh-top{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.crumb{font-size:11px;color:var(--muted);letter-spacing:.7px;text-transform:uppercase}
+.rh-row{display:flex;align-items:flex-end;justify-content:space-between;gap:22px}
+.rh-row h1{font-size:30px;line-height:1.25;color:var(--ink);letter-spacing:-.5px}
+.report-name{display:block;width:100%;max-width:760px;border:0;border-bottom:1px dashed transparent;background:transparent;color:var(--ink);font-size:30px;line-height:1.25;font-weight:700;letter-spacing:-.5px;padding:0 0 2px;border-radius:0}
+.report-name:hover{border-bottom-color:#C9D4E2}
+.report-name:focus{background:#fff;border-bottom-color:var(--gold);box-shadow:none}
+.report-name::placeholder{color:#A7B2C1}
+.rh-row p{font-size:14px;color:var(--muted);margin-top:4px}
+.rh-meta{display:flex;gap:14px;flex-wrap:wrap;justify-content:flex-end;font-size:11px;color:var(--muted);padding-bottom:4px}
+.rh-meta span{white-space:nowrap}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.3px;border:1px solid transparent;vertical-align:middle}
+.tag.example{color:var(--gold);background:var(--goldbg);border-color:#E8D6B4}
+.tag.rec{color:var(--gold);background:var(--goldbg);border-color:#E8D6B4;margin-left:6px}
+.tag.must{color:var(--navy);background:var(--bluebg);border-color:#CFDFF0;margin-left:6px}
+.tag.ok{color:var(--green);background:var(--greenbg);border-color:#CFE5D9}
+.tag.miss{color:var(--red);background:var(--redbg);border-color:#EFD1D1}
+.tag.ai{color:var(--blue);background:var(--bluebg);border-color:#CFDFF0}
+.tag.human{color:var(--amber);background:var(--amberbg);border-color:#EAD9B6}
+
+/* stepper */
+.stepbar{position:sticky;top:70px;z-index:30;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px}
+.steps{display:flex;gap:4px;padding:6px;overflow-x:auto;scrollbar-width:none}
+.steps::-webkit-scrollbar{display:none}
+.step{position:relative;flex:1;min-width:84px;border:0;background:transparent;border-radius:9px;padding:7px 5px 6px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:1px;transition:.16s}
+.step .n{font-size:12px;font-weight:800;letter-spacing:.4px}
+.step span:last-of-type{font-size:11px}
+.step:hover{background:#F5F8FC;color:var(--navy)}
+.step.active{background:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(31,58,95,.18)}
+.step.active .n{color:var(--gold2)}
+.step.locked{opacity:.55}
+.step .lock{position:absolute;top:5px;right:9px;font-size:9px;font-weight:800;color:var(--red)}
+.step-track{height:3px;background:#EEF2F7}
+.step-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),#D9BC82);transition:width .25s ease}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:0 0 18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 13px;box-shadow:0 1px 2px rgba(23,32,51,.025)}
+.stat-k{font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.stat-v{display:flex;align-items:baseline;gap:7px;margin-top:2px}
+.stat-v b{font-size:21px;color:var(--ink);line-height:1.2;letter-spacing:-.3px}
+.stat-v em{font-style:normal;font-size:10px;color:var(--muted)}
+.stat.warn .stat-v b{color:var(--red)}
+
+/* stage head */
+.stage-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:8px 2px 18px;position:relative}
+.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+.stage-head h1{font-size:27px;line-height:1.25;color:var(--ink);letter-spacing:-.4px}
+.stage-head p{font-size:13.5px;color:var(--muted);margin-top:4px;max-width:760px}
+.head-note{font-size:12px;color:var(--navy2);background:var(--bluebg);border-left:2px solid #A9C6E2;padding:6px 10px;border-radius:0 6px 6px 0;margin-top:10px;display:inline-block}
+.ghost{font-size:82px;line-height:1;font-weight:800;color:rgba(31,58,95,.055);letter-spacing:-6px;user-select:none;padding-right:4px}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:18px;margin-bottom:12px}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:13px}
+.card-head h2{font-size:16px;color:var(--ink);line-height:1.35}
+.card-head h3{font-size:15px;color:var(--ink)}
+.card-head p{font-size:12px;color:var(--muted);margin-top:2px}
+.card-head .btn{flex:none}
+.stage-lead{background:linear-gradient(180deg,#fff,#FBFCFE)}
+.lead-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.lead-row h2{font-size:17px;color:var(--ink)}
+.lead-row p{font-size:12.5px;color:var(--muted);margin-top:3px;max-width:720px}
+.lead-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;flex:none}
+.hint{font-size:11.5px;color:var(--muted)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;height:34px;padding:0 13px;border-radius:9px;border:1px solid;font-size:12.5px;font-weight:700;transition:.16s;white-space:nowrap;line-height:1}
+.btn:active{transform:translateY(1px)}
+.btn-gen{background:var(--goldbg);border-color:#E2CBA0;color:#7B591E}
+.btn-gen:hover{background:#F7EDD8;border-color:#D6B87E}
+.btn-judge{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn-judge:hover{background:var(--navy2);border-color:var(--navy2)}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--text)}
+.btn-ghost:hover{border-color:#C6D2E1;background:#FAFBFD}
+.btn-sm{height:30px;padding:0 10px;font-size:11.5px;border-radius:8px}
+.btn-lg{height:40px;padding:0 18px;font-size:13.5px;border-radius:10px}
+.actions{display:flex;align-items:center;gap:7px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+.actions .hint{margin-right:auto}
+.icon-btn{border:0;background:transparent;color:var(--muted);font-size:11px;padding:3px 6px;border-radius:5px}
+.icon-btn:hover{background:var(--redbg);color:var(--red)}
+
+/* forms */
+label{display:block}
+input,textarea,select{width:100%;border:1px solid var(--line);border-radius:8px;background:#FBFCFE;color:var(--text);padding:8px 10px;outline:none;transition:border-color .15s,box-shadow .15s;font-size:13px}
+textarea{resize:vertical;line-height:1.6;min-height:64px}
+input:focus,textarea:focus,select:focus{border-color:#91AECC;background:#fff;box-shadow:0 0 0 3px rgba(31,58,95,.08)}
+input::placeholder,textarea::placeholder{color:#A7B2C1}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#8292A6 50%),linear-gradient(135deg,#8292A6 50%,transparent 50%);background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:26px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:1.1fr 1.1fr 1fr .8fr;gap:8px}
+.mini-field span{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.2px;margin-bottom:3px}
+.mini-field span i{color:var(--red);font-style:normal}
+.person-wrap{position:relative}
+.person-wrap input{padding-right:54px}
+.ptag{position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;background:#F2F5F9;color:var(--muted);border:1px solid var(--line);pointer-events:none}
+.ptag.ok{color:var(--green);background:var(--greenbg);border-color:#D3E7DC}
+.ptag.ext{color:var(--blue);background:var(--bluebg);border-color:#D2E1F1}
+.ptag.miss{color:var(--red);background:var(--redbg);border-color:#EFD4D4}
+.src-badge{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:5px;font-size:9.5px;font-weight:700;border:1px solid;white-space:nowrap}
+.src-manual{color:var(--muted);background:#F6F8FB;border-color:var(--line)}
+.src-ai{color:var(--blue);background:var(--bluebg);border-color:#CFDFF0}
+.src-edited{color:var(--amber);background:var(--amberbg);border-color:#EAD9B6}
+
+/* D2 */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;min-width:0}
+.field-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:7px}
+.field-label{font-size:13px;font-weight:700;color:var(--ink)}
+.field-hint{font-size:10.5px;color:var(--muted);margin-top:1px;line-height:1.45}
+.field textarea{min-height:68px}
+.rate{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:7px 9px;border-radius:7px;background:var(--greenbg);border:1px solid #D5E8DD}
+.rate .rate-k{font-size:10px;color:var(--green);font-weight:700;letter-spacing:.3px}
+.rate b{font-size:15px;color:var(--green)}
+.rate .rate-sub{font-size:10px;color:#5E7C6C}
+.rate.muted{background:#F7F9FC;border-color:var(--line2)}
+.rate.muted .rate-k{color:var(--muted)}
+.rate.muted span:last-child{font-size:10.5px;color:var(--muted)}
+
+/* evidence */
+.ev-block{margin-top:8px;border-top:1px dashed var(--line2);padding-top:7px}
+.ev-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ev-head>span{font-size:10px;color:var(--muted);letter-spacing:.3px}
+.upload{position:relative;overflow:hidden;display:inline-flex;align-items:center;height:23px;padding:0 8px;border:1px solid #D7DFE9;border-radius:6px;background:#fff;color:var(--navy);font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
+.upload:hover{border-color:#AFC3D7;background:#F7FAFD}
+.upload input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ev-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.ev-empty{font-size:10px;color:#A7B2C1}
+.file-chip{display:inline-flex;align-items:center;gap:2px 5px;flex-wrap:wrap;max-width:100%;min-width:0;background:#F7FAFD;border:1px solid #DDE6F0;border-radius:6px;padding:3px 6px;font-size:10px;color:#48617B;overflow:hidden}
+.file-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;flex:0 1 auto;min-width:0}
+.file-sub{color:#8B99A9;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 100%;min-width:0;order:2}
+.file-chip button{order:1;margin-left:auto;flex:none}
+.file-chip button{border:0;background:transparent;color:#A7B2C1;font-size:12px;line-height:1;padding:0 1px}
+.file-chip button:hover{color:var(--red)}
+
+/* candidates */
+.cand-panel{margin-top:10px;border:1px dashed #C6D7E8;background:#F6FAFE;border-radius:9px;padding:10px}
+.cand-title{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:var(--navy);font-weight:700;margin-bottom:2px}
+.cand-title span{font-weight:400;color:var(--muted);text-align:right}
+.cand{background:#fff;border:1px solid #DCE5EF;border-radius:8px;padding:9px 10px;margin-top:7px;display:flex;align-items:flex-start;gap:10px}
+.cand-main{flex:1;min-width:0}
+.cand-text{font-size:12.5px;color:var(--text);line-height:1.55}
+.cand-meta{font-size:10px;color:var(--muted);margin-top:3px}
+.cand .btn{flex:none;margin-top:1px}
+.cand-tag{display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:5px;background:var(--goldbg);color:var(--gold);border:1px solid #E8D6B4}
+
+/* judgment */
+.jd{margin-top:10px;border:1px solid var(--line);border-left:3px solid;border-radius:8px;padding:10px 11px;background:#FBFCFD}
+.jd.ok{border-left-color:var(--green);background:var(--greenbg);border-color:#D8E9DF}
+.jd.part{border-left-color:var(--amber);background:var(--amberbg);border-color:#EBDDBE}
+.jd.bad{border-left-color:var(--red);background:var(--redbg);border-color:#EFD4D4}
+.jd-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.verdict{font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;letter-spacing:.3px}
+.jd.ok .verdict{background:var(--green);color:#fff}
+.jd.part .verdict{background:var(--amber);color:#fff}
+.jd.bad .verdict{background:var(--red);color:#fff}
+.jd-target{font-size:10px;color:var(--muted)}
+.jd-row{display:grid;grid-template-columns:56px 1fr;gap:8px;margin-top:5px}
+.jd-row b{font-size:9.5px;color:#7A8798;font-weight:700;letter-spacing:.4px;padding-top:2px}
+.jd-row p{font-size:12px;line-height:1.6;color:#354357}
+.jd-checks{margin:7px 0 4px;display:grid;gap:4px}
+.chk{font-size:11px;display:flex;align-items:flex-start;gap:6px;line-height:1.5}
+.chk span{flex:none;font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px}
+.chk.ok span{background:var(--greenbg);color:var(--green);border:1px solid #CFE5D9}
+.chk.no span{background:var(--redbg);color:var(--red);border:1px solid #EFD1D1}
+.chk em{font-style:normal;color:var(--muted);font-size:10px;margin-left:4px}
+
+/* D1 */
+.member-head,.member{display:grid;grid-template-columns:1.05fr .85fr 1.35fr 1fr .68fr 34px;gap:7px;align-items:center}
+.member-head{font-size:9.5px;color:var(--muted);padding:0 4px 5px;letter-spacing:.3px}
+.member{background:#FBFCFE;border:1px solid var(--line2);border-radius:8px;padding:7px;margin-bottom:5px}
+.member input,.member select{padding:6px 8px;font-size:12px;background:#fff}
+.member .icon-btn{justify-self:center}
+.member-no{display:none}
+
+/* D3/D5 rows */
+.row-card{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff;margin-bottom:8px}
+.row-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}
+.row-no{font-size:10px;font-weight:800;color:var(--gold);letter-spacing:.8px}
+.row-head-right{display:flex;align-items:center;gap:6px}
+.row-card textarea{min-height:58px}
+.coverage{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.root-chip{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#FBFCFE;font-size:10.5px;display:flex;align-items:center;gap:6px;max-width:100%}
+.root-chip b{font-size:9.5px;letter-spacing:.5px;color:var(--navy)}
+.root-chip span{font-weight:700;font-size:9.5px;padding:1px 5px;border-radius:3px}
+.root-chip em{font-style:normal;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.root-chip.ok{border-color:#D2E7DB;background:var(--greenbg)}
+.root-chip.ok span{color:var(--green);background:#fff}
+.root-chip.miss{border-color:#EFD4D4;background:var(--redbg)}
+.root-chip.miss span{color:var(--red);background:#fff}
+.inline-warn{font-size:11px;color:var(--amber);background:var(--amberbg);border:1px solid #EBDDBE;border-radius:7px;padding:7px 9px;margin:8px 0}
+
+/* D4 */
+.tool-table{width:100%;border-collapse:collapse}
+.tool-table th{text-align:left;font-size:9.5px;color:var(--muted);letter-spacing:.4px;font-weight:700;padding:0 7px 7px;border-bottom:1px solid var(--line)}
+.tool-table td{padding:8px 7px;border-bottom:1px solid var(--line2);font-size:11.5px;vertical-align:top;line-height:1.5}
+.tool-table tr:last-child td{border-bottom:0}
+.tool-table td:first-child{width:26px}
+.tool-table td:nth-child(2){width:126px}
+.tool-table td:nth-child(3){width:31%}
+.tool-table b{font-size:12px;color:var(--ink)}
+.check{display:grid;place-items:center}
+.check input{width:15px;height:15px;accent-color:var(--navy);padding:0}
+.table-wrap{overflow-x:auto}
+.tool-outputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.tool-out{background:#FBFCFE;border:1px solid var(--line2);border-radius:8px;padding:9px}
+.tool-out-head{display:flex;justify-content:space-between;gap:8px;margin-bottom:5px}
+.tool-out-head b{font-size:11px;color:var(--ink)}
+.tool-out-head span{font-size:9.5px;color:var(--muted)}
+.tool-out textarea{min-height:54px;background:#fff}
+.dir-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.dir{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px}
+.dir .dir-tag{font-size:9px;font-weight:800;color:var(--blue);background:var(--bluebg);border:1px solid #D2E1F1;border-radius:3px;padding:1px 5px;display:inline-block;margin-bottom:5px}
+.dir b{display:block;font-size:11.5px;line-height:1.5;color:var(--ink)}
+.dir p{font-size:10px;color:var(--muted);margin-top:4px}
+.chain{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px;margin-bottom:10px}
+.chain-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:5px}
+.chain-title{display:flex;gap:9px;align-items:flex-start}
+.chain-badge{flex:none;width:28px;height:28px;border-radius:7px;background:var(--navy);color:var(--gold2);display:grid;place-items:center;font-size:12px;font-weight:800}
+.chain-badge.b{background:#6D4A22;color:#F2DFC0}
+.chain-title h3{font-size:15px;color:var(--ink)}
+.chain-title p{font-size:10.5px;color:var(--muted);margin-top:1px;max-width:620px}
+.chain-side{display:flex;align-items:flex-end;gap:7px;flex:none}
+.chain-side .mini-field{width:118px}
+.chain-side input{height:31px;padding:4px 8px;font-size:11px;padding-right:50px}
+.chain-four{font-size:10.5px;color:#5B6C80;background:#F7FAFD;border:1px solid #DCE6F0;border-radius:7px;padding:6px 9px;margin:6px 0 2px;line-height:1.55}
+.chain-four b{font-size:9.5px;color:var(--navy);letter-spacing:.4px;margin-right:4px}
+.layer{position:relative;padding-left:40px;margin-top:10px}
+.layer::before{content:"";position:absolute;left:13px;top:32px;bottom:-10px;width:1px;background:var(--line)}
+.layer:last-child::before{display:none}
+.layer-no{position:absolute;left:0;top:0;width:27px;height:27px;border-radius:50%;background:#F2F6FA;border:1px solid #CBD8E5;color:var(--navy);display:grid;place-items:center;font-size:10px;font-weight:800}
+.layer-body{background:#FBFCFE;border:1px solid var(--line2);border-radius:9px;padding:10px}
+.layer-head{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.layer-q{font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.4px}
+.layer-head .icon-btn{margin-left:auto}
+.layer textarea{min-height:52px;background:#fff}
+.layer .mini-field{margin-top:6px}
+.layer input{background:#fff;font-size:11.5px;padding:6px 8px}
+.demo .actions{justify-content:flex-start;margin-top:0}
+.demo .btn{height:32px;font-size:11px}
+
+/* D6 */
+.check-item{display:flex;gap:9px;border-top:1px solid var(--line2);padding:9px 0}
+.check-item:first-of-type{border-top:0}
+.ci-no{flex:none;width:21px;height:21px;border-radius:50%;background:#F2F6FA;border:1px solid #D4DFEB;color:var(--navy);display:grid;place-items:center;font-size:9px;font-weight:800}
+.ci-body{flex:1;min-width:0}
+.ci-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ci-head b{font-size:12px;color:var(--ink)}
+.standard{font-size:10.5px;color:var(--muted);margin-top:2px}
+.group-head{display:flex;align-items:flex-start;gap:9px;margin-bottom:6px}
+.group-no{flex:none;font-size:9px;font-weight:800;color:var(--gold);letter-spacing:.6px;padding-top:2px}
+.group-head h3{font-size:13px;color:var(--ink);line-height:1.45}
+.group-root{font-size:10px;color:var(--muted);margin-top:2px}
+.check-summary{border:1px solid var(--line);border-radius:9px;padding:11px;background:#FBFCFE;margin-top:10px}
+.check-summary.part{border-color:#EBDDBE;background:var(--amberbg)}
+.check-summary.ok{border-color:#D3E7DC;background:var(--greenbg)}
+.cs-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;margin-bottom:5px}
+.cs-head b{font-size:12px}
+.cs-line{font-size:10.5px;color:#59687A;margin-top:3px;line-height:1.55}
+.conclusion{border-color:#D8E3EE;background:linear-gradient(180deg,#fff,#FBFDFF)}
+.gate{display:flex;align-items:center;gap:8px;font-size:11px;border-radius:7px;padding:8px 10px;margin-top:10px;border:1px solid}
+.gate.ok{background:var(--greenbg);border-color:#D3E7DC;color:var(--green)}
+.gate.part{background:var(--amberbg);border-color:#EBDDBE;color:var(--amber)}
+.gate.bad{background:var(--redbg);border-color:#EFD4D4;color:var(--red)}
+.gate b{font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+
+/* D7 */
+.d7-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.d7-item{border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff}
+.di-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.di-head b{font-size:12px;color:var(--ink)}
+.cat{font-size:8.5px;font-weight:800;letter-spacing:.5px;color:var(--navy);background:var(--bluebg);border:1px solid #D2E1F1;border-radius:3px;padding:1px 5px}
+.d7-item>p{font-size:10.5px;color:var(--muted);line-height:1.55;min-height:32px}
+.d7-item .grid2{gap:6px;margin-top:6px}
+.d7-item .mini-field span{font-size:9.5px}
+.d7-item .mini-field input{font-size:10.5px;padding:5px 7px;padding-right:48px}
+.d7-item .ev-block{margin-top:6px}
+.d7-item .file-name{max-width:120px}
+.d7-item .file-sub{display:none}
+.lock-card{text-align:center;padding:36px 20px;border:1px dashed #D8C6A8;background:linear-gradient(180deg,#FFFDF8,#FDF9F0)}
+.lock-mark{width:48px;height:48px;border-radius:50%;background:var(--amberbg);border:1px solid #E6D3AE;color:var(--amber);display:grid;place-items:center;font-size:19px;font-weight:800;margin:0 auto 10px}
+.lock-card h3{font-size:18px;color:var(--ink)}
+.lock-card p{font-size:12px;color:var(--muted);max-width:560px;margin:5px auto 14px}
+.issue-summary{margin-top:9px}
+.issue-line{display:flex;gap:7px;align-items:flex-start;font-size:11px;line-height:1.55;padding:5px 0;border-top:1px solid rgba(0,0,0,.055)}
+.issue-line:first-child{border-top:0}
+
+/* D8 */
+.textblock{border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff;margin-bottom:8px}
+.textblock textarea{min-height:74px}
+.textblock .actions{margin-top:7px}
+.report-verdict{border-radius:10px;padding:14px 16px;border:1px solid;margin:10px 0}
+.report-verdict.bad{background:var(--redbg);border-color:#EFD1D1;color:#743030}
+.report-verdict.part{background:var(--amberbg);border-color:#EBD9B6;color:#6E4A12}
+.report-verdict.ok{background:var(--greenbg);border-color:#D2E7DB;color:#245D46}
+.rv-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rv-top span{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.rv-top em{font-style:normal;font-size:10px;opacity:.6}
+.report-verdict p{font-size:11.5px;margin-top:3px;opacity:.85}
+.issue-list{display:grid;gap:7px;margin-top:9px}
+.issue{border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:8px;padding:9px 11px;background:#fff}
+.issue.sev-3{border-left-color:var(--red)}
+.issue.sev-2{border-left-color:var(--amber)}
+.issue.sev-1{border-left-color:#93A6BA}
+.issue-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sev{font-size:8.5px;font-weight:800;padding:1px 5px;border-radius:3px;letter-spacing:.3px}
+.sev-3 .sev,.sev.sev-3{background:var(--redbg);color:var(--red);border:1px solid #EFD1D1}
+.sev-2 .sev,.sev.sev-2{background:var(--amberbg);color:var(--amber);border:1px solid #EBD9B6}
+.sev-1 .sev,.sev.sev-1{background:#F2F5F9;color:#6E7E91;border:1px solid var(--line)}
+.stage-pill{font-size:8.5px;font-weight:800;color:var(--navy);background:var(--bluebg);border:1px solid #D2E1F1;border-radius:3px;padding:1px 5px}
+.issue-top b{font-size:12px;color:var(--ink)}
+.issue p{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.55}
+.issue .goto{border:0;background:transparent;color:var(--navy);font-size:9.5px;font-weight:700;padding:2px 0;margin-top:2px;text-decoration:underline;text-underline-offset:2px}
+.more{margin-top:8px;font-size:10.5px;color:var(--muted)}
+.more summary{cursor:pointer;font-weight:700;color:var(--navy)}
+.stale{font-size:11px;color:var(--amber);background:var(--amberbg);border:1px solid #EBD9B6;border-radius:7px;padding:7px 9px;margin-bottom:9px}
+
+/* records */
+.record-panel{margin-top:22px}
+.record-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.record-head h2{font-size:15px;color:var(--ink)}
+.record-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.record-table th{font-size:9.5px;color:var(--muted);text-align:left;padding:7px 10px;background:#F8FAFC;border-bottom:1px solid var(--line);font-weight:700;letter-spacing:.3px}
+.record-table td{font-size:10.5px;padding:7px 10px;border-bottom:1px solid var(--line2);vertical-align:top}
+.record-table tr:last-child td{border-bottom:0}
+.record-table .rt{color:var(--muted);white-space:nowrap}
+.record-table .rv{font-weight:700;white-space:nowrap}
+.record-table .rv.ok{color:var(--green)}
+.record-table .rv.part{color:var(--amber)}
+.record-table .rv.bad{color:var(--red)}
+.record-reason{font-size:9.5px;color:var(--muted);margin-top:1px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* footer / toast */
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--navy);color:#fff;font-size:12px;padding:9px 15px;border-radius:9px;box-shadow:0 10px 30px rgba(15,25,40,.25);opacity:0;pointer-events:none;transition:.2s;z-index:100;max-width:86vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* history library */
+.modal-mask{position:fixed;inset:0;z-index:90;background:rgba(15,25,40,.38);display:grid;place-items:center;padding:22px}
+.modal-mask[hidden]{display:none}
+.history-modal{width:min(760px,100%);max-height:86vh;background:#fff;border-radius:16px;box-shadow:0 24px 80px rgba(15,25,40,.28);display:flex;flex-direction:column;overflow:hidden}
+.history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+.history-head h2{font-size:18px;color:var(--ink)}
+.history-head p{font-size:11.5px;color:var(--muted);margin-top:2px}
+.history-new{display:flex;gap:8px;padding:14px 20px;border-bottom:1px solid var(--line2);background:#FBFCFE;flex-wrap:wrap}
+.history-new input{flex:1;min-width:200px}
+.history-list{overflow:auto;padding:10px 20px 18px}
+.hist-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line2)}
+.hist-item:last-child{border-bottom:0}
+.hist-item.current{background:var(--goldbg);margin:0 -10px;padding:10px;border-radius:8px;border-bottom-color:transparent}
+.hist-main{min-width:0}
+.hist-main b{display:block;font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-main span{display:block;font-size:10px;color:var(--muted);margin-top:1px}
+.hist-actions{display:flex;gap:5px;flex:none}
+.hist-empty{font-size:12px;color:var(--muted);padding:18px 0;text-align:center}
+@media(max-width:760px){
+  .history-modal{max-height:92vh}
+  .history-new{padding:12px 14px}
+  .history-list{padding:8px 14px 14px}
+  .hist-item{align-items:flex-start}
+  .hist-actions{flex-direction:column}
+  .report-name{font-size:24px}
+}
+
+@media(max-width:980px){
+  .rh-row{flex-direction:column;align-items:flex-start;gap:7px}
+  .rh-meta{justify-content:flex-start}
+  .stage-head .ghost{font-size:64px}
+  .field-grid,.tool-outputs,.d7-list{grid-template-columns:1fr}
+  .dir-grid{grid-template-columns:1fr}
+  .grid4{grid-template-columns:1fr 1fr}
+  .member-head{display:none}
+  .member{grid-template-columns:1fr 1fr;gap:6px}
+  .member .icon-btn{justify-self:end}
+  .lead-row{flex-direction:column}
+  .lead-actions{justify-content:flex-start}
+  .chain-head{flex-direction:column}
+  .chain-side{width:100%;justify-content:space-between}
+  .chain-side .mini-field{flex:1}
+}
+@media(max-width:760px){
+  .workspace{padding:18px 14px 60px}
+  .topbar-inner{padding:0 14px;height:58px}
+  .pill{display:none}
+  .brand-text small{display:none}
+  .rh-row h1{font-size:24px}
+  .rh-meta{font-size:10px;gap:8px}
+  .stepbar{top:64px}
+  .step{min-width:66px;padding:6px 3px}
+  .step span:last-of-type{font-size:9.5px}
+  .stats{grid-template-columns:1fr 1fr;gap:7px}
+  .stat-v b{font-size:19px}
+  .stage-head{padding-bottom:12px}
+  .stage-head h1{font-size:22px}
+  .stage-head .ghost{display:none}
+  .card{padding:13px;border-radius:12px}
+  .field-grid{grid-template-columns:1fr}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .grid4{grid-template-columns:1fr 1fr}
+  .actions{justify-content:flex-start}
+  .actions .hint{width:100%;margin:0}
+  .actions .btn{flex:1}
+  .row-head{flex-wrap:wrap}
+  .cand{flex-direction:column}
+  .cand .btn{width:100%}
+  .jd-row{grid-template-columns:1fr;gap:1px}
+  .jd-row b{padding-top:3px}
+  .chain-side{flex-direction:column;align-items:stretch}
+  .chain-side .mini-field{width:auto}
+  .d7-item .grid2{grid-template-columns:1fr 1fr}
+  .top-actions .btn-sm{padding:0 8px}
+  .rec-btn{padding:0 8px}
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">8D</span>
+      <span class="brand-text"><b>Copilot</b><small>PRD v3.1 · MVP V0.2</small></span>
+    </div>
+    <div class="top-actions">
+      <span class="pill ai-off" id="aiPill" onclick="aiHelp()" title="点击查看 DeepSeek 连接方式">本地规则 · 未接 DeepSeek</span>
+      <button class="rec-btn" onclick="toggleHistory()">历史库</button>
+      <button class="rec-btn" onclick="toggleRecords()">判断记录 <b id="recCount">0</b></button>
+      <button class="btn btn-ghost btn-sm" onclick="resetDemo()">重置示例</button>
+    </div>
+  </div>
+</header>
+
+<div class="workspace">
+  <section class="report-head">
+    <div class="rh-top"><span class="crumb">质量工程 / 8D 报告</span><span class="tag example">示例数据</span></div>
+    <div class="rh-row">
+      <div>
+        <h1><input id="reportName" class="report-name" value="" placeholder="填写这份 8D 的名称" oninput="onReportName(this)" aria-label="8D 名称"></h1>
+        <p>一个输入框，两个按钮。生成负责从无到有，判断负责从有到对。</p>
+      </div>
+      <div class="rh-meta">
+        <span id="reportId">8D-—</span>
+        <span>客户：华东某主机厂（示例）</span>
+        <span>提出人：<b id="reportProposer">张伟</b></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="stepbar">
+    <div class="steps" id="steps"></div>
+    <div class="step-track"><i id="stepFill"></i></div>
+  </div>
+
+  <section class="stats" id="stats"></section>
+  <main id="stage"></main>
+
+  <section class="record-panel" id="recordPanel" hidden>
+    <div class="record-head">
+      <h2>判断记录</h2>
+      <span class="hint">只留痕，不进报告正文；记录随本机数据保存，不上传</span>
+    </div>
+    <div id="recordBody"></div>
+  </section>
+
+  <footer>
+    <span>8D Copilot · PRD v3.1 MVP · 单文件前端、零外部运行时依赖</span>
+    <span>不代写整份报告 · 不替你定根因 · 不判“有效” · 不猜工厂情况</span>
+    <span>历史库与填写只存在本浏览器；本地规则模式不联网。接入 DeepSeek 时当前阶段上下文会发往模型接口；附件只取文件名/大小/时间，清空浏览器数据会丢失历史。</span>
+  </footer>
+</div>
+
+<div class="modal-mask" id="historyMask" hidden onclick="if(event.target===this)closeHistory()">
+  <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+    <div class="history-head">
+      <div><h2 id="historyTitle">历史库</h2><p>每份 8D 单独保存；新建时可填写名称，之后也能在标题处直接改。</p></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeHistory()">关闭</button>
+    </div>
+    <div class="history-new">
+      <input id="newReportName" placeholder="新 8D 名称，例如：2026-10 支柱扁位漏加工" onkeydown="if(event.key==='Enter')createReport('blank')">
+      <button class="btn btn-judge btn-sm" onclick="createReport('blank')">新建空白 8D</button>
+      <button class="btn btn-gen btn-sm" onclick="createReport('demo')">新建示例 8D</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </section>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<datalist id="peopleList"></datalist>
+
+<script>
+/* ============ 基础数据 ============ */
+const ROSTER = [
+  {name:'张伟',dept:'质量部',role:'质量工程师、组长',contact:'138****2101'},
+  {name:'李强',dept:'生产部',role:'生产主管、根因分析',contact:'139****3302'},
+  {name:'王敏',dept:'工程部',role:'工艺工程师、措施执行',contact:'137****5518'},
+  {name:'陈芳',dept:'质量部',role:'检验班长、措施执行',contact:'136****7720'}
+];
+
+const TOOLS = [
+  {id:'why',name:'5Why',when:'所有问题，必选、不可取消',basis:'—',locked:true},
+  {id:'fish',name:'鱼骨图',when:'原因不明、涉及多个部门或多个环节',basis:'D2 Where 跨工序 / Why 影响多环节'},
+  {id:'pareto',name:'柏拉图',when:'缺陷类型可以分类计数',basis:'D2 What 出现两种以上缺陷模式'},
+  {id:'strata',name:'层别法',when:'问题可能集中在某一批、某台设备、某个人、某个班次',basis:'D2 When 时间集中 / Where 指向设备'},
+  {id:'check',name:'检查表',when:'需要到现场逐项确认有没有做',basis:'D2 How 是巡检或自检'},
+  {id:'hist',name:'直方图',when:'缺陷是尺寸或参数偏离，有连续数值',basis:'D2 What 是尺寸超差、角度不对这类'},
+  {id:'scatter',name:'散布图',when:'怀疑两个变量相关（转速与尺寸、余量与变形）',basis:'D2 Why 提到工艺参数变化'},
+  {id:'control',name:'控制图',when:'需要判断过程是偶发还是失控',basis:'D2 When 显示长期反复发生'},
+  {id:'fta',name:'FTA 故障树',when:'涉及安全、功能失效，或后果有多级触发关系',basis:'D2 Why 是安全 / 功能失效 / 停线'}
+];
+
+const D2_FIELDS = [
+  {key:'what',label:'What 缺陷现象',hint:'写具体缺陷模式；“不良”“异常”不算',seed:'支柱扁位未加工，扁位尺寸与图纸不符'},
+  {key:'where',label:'Where 发现地点',hint:'精确到工序、工位或设备',seed:'普铣工序，换班后第一小时，2 号普铣'},
+  {key:'when',label:'When 发现时间',hint:'时间范围 + 批次号或订单号',seed:'2026-10-18 下午换班后，批次 20261018-A'},
+  {key:'who',label:'Who 发现人 / 受影响对象',hint:'受影响的是哪个产品、哪个客户',seed:'产品：支柱；客户：华东某主机厂（示例）'},
+  {key:'why',label:'Why 影响程度',hint:'客户投诉、停线、报废还是返工',seed:'客户投诉，已流出 200 件，厂内 120 件待处理'},
+  {key:'how',label:'How 发现方式',hint:'自检、专检、巡检还是客户反馈',seed:'自检发现，随后对该批 120 件全检'},
+  {key:'howmany',label:'How many 数量',hint:'发生数量、检验数量；不良率由系统算',seed:'发生 3 件，检验 120 件'},
+  {key:'isnot',label:'Is / Is-Not 对比',hint:'哪些有、哪些没有',seed:'有：下午换班后第一小时、2 号普铣；没有：其余时段、1 号普铣'}
+];
+
+/* ============ 工具 ============ */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function clip(s,n){s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n)+'…':s;}
+function quote(s,n){return '“'+clip(s,n||26)+'”';}
+function uid(p){return p+Math.random().toString(36).slice(2,7);}
+function evSeed(name,size,fileTime,uploadedAt){return {name,size,fileTime,uploadedAt};}
+function fmtSize(n){if(!n)return '—';if(n<1024)return n+' B';if(n<1024*1024)return (n/1024).toFixed(0)+' KB';return (n/1024/1024).toFixed(1)+' MB';}
+function pad(n){return String(n).padStart(2,'0');}
+function fmtDT(v){
+  if(!v)return '—';
+  if(typeof v==='string')return v;
+  const d=new Date(v);
+  if(isNaN(d))return '—';
+  return pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+function nowStamp(){const d=new Date();return pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());}
+function get(path){return path.split('.').reduce((o,k)=>o==null?undefined:o[k],state);}
+function srcBadge(s){const m={manual:['src-manual','手工填写'],ai:['src-ai','AI 生成'],edited:['src-edited','已修改']};const v=m[s]||m.manual;return '<span data-src class="src-badge '+v[0]+'">'+v[1]+'</span>';}
+function personTag(v){
+  if(!v||!String(v).trim())return '<span class="ptag miss">待指定</span>';
+  const n=String(v).trim();
+  if(state.d1.members.some(m=>m.name.trim()===n))return '<span class="ptag ok">组内</span>';
+  return '<span class="ptag ext">外部</span>';
+}
+function personInput(label,value,handler,req){
+  return '<label class="mini-field"><span>'+label+(req===false?'':' <i>*</i>')+'</span><div class="person-wrap"><input list="peopleList" value="'+esc(value)+'" placeholder="选择或手填" oninput="'+handler+'">'+personTag(value)+'</div></label>';
+}
+function refreshPersonTag(input){
+  const wrap=input.closest('.person-wrap');if(!wrap)return;
+  const old=wrap.querySelector('.ptag');if(old)old.outerHTML=personTag(input.value);
+}
+function refreshBadge(el,source){
+  const host=el.closest('.src-host');if(!host)return;
+  const b=host.querySelector('[data-src]');if(b)b.outerHTML=srcBadge(source);
+}
+function markDirty(){if(state.d8.report)state.d8.stale=true;persist();}
+function staleD6(){if(state.d6.groups&&state.d6.groups.length)state.d6.stale=true;}
+function staleD7(){if(state.d7.items&&state.d7.items.length)state.d7.stale=true;}
+
+/* ============ 示例状态 ============ */
+function buildD6GroupsFor(rows,d4){
+  const all=[...d4.a.layers,...d4.b.layers];
+  const rootFor=id=>all.find(l=>l.id===id);
+  return rows.filter(r=>r.text.trim()).map(r=>{
+    const t=r.text;
+    let defs;
+    if(/核对|清单|强制|互锁|启动/.test(t)){
+      defs=[
+        {label:'换设备作业的书面规定（写明核对工序清单）',standard:'规定里必须有“核对工序清单”这一步，并注明记录位置。',keywords:['规定','作业','清单']},
+        {label:'连续 20 次换设备的执行记录',standard:'每次都有核对记录，核对率 100%。',keywords:['记录','换设备','抽查']},
+        {label:'操作者培训与确认记录',standard:'涉及换设备的操作者全部签认。',keywords:['培训','签到','确认']}
+      ];
+    }else if(/目视|100%|全检|检验|复检/.test(t)){
+      defs=[
+        {label:'下道目视作业的书面规定',standard:'写明看哪几步、看什么、谁看。',keywords:['规定','作业','目视']},
+        {label:'故意漏加工样件的测试记录',standard:'样件必须被下道拦下，记录测试人和结果。',keywords:['样件','测试','漏加工','验证']},
+        {label:'实施后连续检验记录',standard:'注明实际件数，不良率为 0。',keywords:['检验记录','连续','件数']}
+      ];
+    }else{
+      defs=[
+        {label:'措施对应的书面规定或作业文件',standard:'文件里能查到这条措施的动作。',keywords:['规定','文件','作业']},
+        {label:'实施后的执行记录',standard:'注明日期、数量和执行人。',keywords:['记录','执行','日期']},
+        {label:'有效性验证记录',standard:'有对比数据或故意做坏件的测试。',keywords:['验证','测试','对比']}
+      ];
+    }
+    const root=rootFor(r.target);
+    return {
+      id:'g-'+r.id,measureId:r.id,measureText:t,rootText:root?root.answer:'',
+      items:defs.map((d,i)=>({id:r.id+'-'+i,...d,evidence:[]}))
+    };
+  });
+}
+
+function buildD7ItemsFor(aRoot,bRoot){
+  const noPoka=/没有.*(提醒|防错|定位|互锁|阻止)|漏排.*(流|做)|直接启动/.test(aRoot||'');
+  const insp=/检验标准|检验项|必检|量具|频次|抽样/.test(bRoot||'');
+  const items=[];
+  const push=(id,cat,label,desc,keywords)=>items.push({id,cat,label,desc,keywords,evidence:[],proposer:'',owner:''});
+  if(noPoka){
+    push('fmea','FMEA','FMEA（新增失效模式与预防措施）','在普铣工序下新增失效模式“扁位漏加工”，预防措施写“换设备强制核对工序清单”。',['FMEA','失效']);
+    push('control','控制计划','控制计划（新增控制方法）','该工序增加一条控制方法，频次与工艺卡一致：每次换设备。',['控制计划','控制']);
+    push('process','工艺卡','工艺卡 / 作业指导书（加入核对动作）','在换设备作业步骤里加入“核对工序清单”，并注明记录位置。',['工艺卡','作业指导']);
+  }
+  if(insp){
+    push('inspect','检验标准','检验标准 / 检验指导书（把扁位列为必检项）','把扁位列为必检项，写清量具、频次与抽样方式。',['检验标准','检验指导','必检']);
+    if(!noPoka)push('control','控制计划','控制计划（补检验手段与频次）','把新增检验项写进控制计划，频次和抽样方式要能覆盖。',['控制计划','控制']);
+  }
+  if(!noPoka&&!insp){
+    push('fmea','FMEA','FMEA（补失效模式与预防）','按根因补一条失效模式，预防措施要改变发生条件。',['FMEA','失效']);
+    push('control','控制计划','控制计划（补控制方法）','把措施写进控制计划，明确频次和责任人。',['控制计划','控制']);
+    push('process','工艺卡','工艺卡 / 作业指导书','把措施写进操作步骤，注明记录位置。',['工艺卡','作业指导']);
+  }
+  push('change','变更单','变更单与生效日期','文件改了要走变更流程：变更单号、生效日期、审批记录。',['变更单','变更','生效']);
+  push('train','培训记录','操作者 / 检验员培训记录','让执行新文件的人签认，文件才不会躺在柜子里。',['培训','签到']);
+  return items;
+}
+
+function nowISO(){return new Date().toISOString();}
+function newReportId(){
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return '8D-'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())+'-'+Math.random().toString(36).slice(2,4).toUpperCase();
+}
+function cloneState(s){return JSON.parse(JSON.stringify(s));}
+function ensureMeta(s,name){
+  if(!s.meta||typeof s.meta!=='object')s.meta={};
+  if(!s.meta.id)s.meta.id=newReportId();
+  if(!s.meta.name)s.meta.name=name||'未命名 8D';
+  if(!s.meta.createdAt)s.meta.createdAt=nowISO();
+  if(!s.meta.updatedAt)s.meta.updatedAt=nowISO();
+  return s.meta;
+}
+function freshState(){
+  const d2fields={};
+  D2_FIELDS.forEach(f=>{d2fields[f.key]={text:f.seed,source:'manual',evidence:[],jd:null};});
+  const d2ev={
+    what:evSeed('缺陷实物_扁位未加工.jpg',248000,'2026-10-18 16:20','2026-10-18 17:05'),
+    where:evSeed('现场照片_2号普铣.jpg',316000,'2026-10-18 16:31','2026-10-18 17:06'),
+    why:evSeed('客户投诉邮件_20261018.pdf',182000,'2026-10-18 17:12','2026-10-18 17:30'),
+    how:evSeed('自检记录_20261018.xlsx',46000,'2026-10-18 16:25','2026-10-18 17:33'),
+    howmany:evSeed('全检记录_120件.xlsx',52000,'2026-10-18 18:05','2026-10-18 18:20')
+  };
+  Object.keys(d2ev).forEach(k=>{d2fields[k].evidence=[d2ev[k]];});
+
+  const layer=(id,answer,basis,file)=>(
+    {id,answer,basis,evidence:file?[evSeed(file,120000,'2026-10-18 17:20','2026-10-18 17:45')]:[],jd:null,source:'manual'}
+  );
+
+  const d4={
+    methodPicked:false,toolList:null,tools:{},toolsJd:null,dirs:null,
+    outputs:{
+      strata:{text:'按班次分层：下午换班后第一小时 3 件不良 / 117 件；其余时段 0 件 / 3 件。',evidence:[evSeed('层别记录_按班次.xlsx',38000,'2026-10-18 18:30','2026-10-18 18:40')]},
+      check:{text:'换设备确认项 5 项，现场检查发现“工序完整性核对”一项缺失。',evidence:[evSeed('换设备检查表.jpg',210000,'2026-10-18 18:35','2026-10-18 18:42')]}
+    },
+    a:{
+      proposer:'王敏',jd:null,
+      layers:[
+        layer('a1','这 3 件是下午换班后第一小时的料，那一小时同时在赶另一个急单，走的是另一台普铣。','D2 批次记录、换班记录、2 号普铣运行记录','批次流转记录.xlsx'),
+        layer('a2','换设备时没有东西提醒这道工序还没做，漏排也照样能直接流到下道。','现场确认：换设备无工序核对清单','换设备作业规定.pdf'),
+        layer('a3','换设备作业规定只写了装夹步骤，没有工序完整性确认；设备可以在未核对清单时直接启动。','换设备作业规定第 3 页；设备启动条件检查','现场确认_换设备.jpg')
+      ]
+    },
+    b:{
+      proposer:'陈芳',jd:null,
+      layers:[
+        layer('b1','检验只量外径和总长，扁位不在检验项里。','检验标准第 3 页：检验项只有外径、总长','检验标准_第3页.pdf'),
+        layer('b2','检验标准里没有扁位这一项，新检验员完全按标准执行也检不到。','检验标准检验项清单','检验标准_检验项清单.pdf'),
+        layer('b3','检验标准编制时只引用了图纸尺寸，没有把扁位列为关键特性，也没有规定量具和频次。','检验标准编制记录、图纸关键特性清单','检验标准编制记录.docx')
+      ]
+    }
+  };
+
+  const d5rows=[
+    {id:'m1',text:'换设备时强制核对工序清单，未核对不能启动设备',target:'a3',proposer:'张伟',owner:'王敏',due:'2026-11-02',status:'待完成',evidence:[],source:'manual',jd:null},
+    {id:'m2',text:'下道工序对扁位 100% 目视并留记录',target:'b3',proposer:'陈芳',owner:'陈芳',due:'2026-11-02',status:'已完成',evidence:[evSeed('下道目视作业规定.pdf',420000,'2026-10-20 15:10','2026-10-21 09:20')],source:'manual',jd:null}
+  ];
+
+  const d3rows=[
+    {id:'t1',text:'该批 120 件 100% 复检扁位',proposer:'张伟',owner:'陈芳',due:'2026-10-18T18:00',status:'已完成',evidence:[evSeed('复检记录_120件.xlsx',61000,'2026-10-18 17:55','2026-10-18 18:10')],source:'manual',jd:null},
+    {id:'t2',text:'已发出的 200 件通知客户拦截，销售确认签收清单',proposer:'张伟',owner:'赵磊',due:'2026-10-18T20:00',status:'执行中',evidence:[evSeed('客户拦截邮件.png',140000,'2026-10-18 18:20','2026-10-18 18:35')],source:'manual',jd:null},
+    {id:'t3',text:'在制品暂停流转，待扁位复检合格后放行',proposer:'李强',owner:'李强',due:'2026-10-19T12:00',status:'已完成',evidence:[],source:'manual',jd:null},
+    {id:'t4',text:'更换磨损定位销，修改工装图纸',proposer:'王敏',owner:'王敏',due:'2026-11-02T17:00',status:'待执行',evidence:[],source:'manual',jd:null}
+  ];
+
+  const d6groups=buildD6GroupsFor(d5rows,d4);
+  d6groups.forEach(g=>{
+    if(g.measureId==='m1'&&g.items[0])g.items[0].evidence=[evSeed('换设备作业规定_照片.jpg',184320,'2026-10-18 16:40','2026-10-18 17:02')];
+    if(g.measureId==='m2'&&g.items[0])g.items[0].evidence=[evSeed('下道目视作业规定.pdf',420000,'2026-10-20 15:10','2026-10-21 09:20')];
+  });
+
+  const a3=d4.a.layers.find(l=>l.id==='a3');
+  const b3=d4.b.layers.find(l=>l.id==='b3');
+  const d7items=buildD7ItemsFor(a3?a3.answer:'',b3?b3.answer:'');
+  const d7seed={
+    fmea:{proposer:'王敏',owner:'王敏',evidence:[evSeed('FMEA_普铣工序_改版.pdf',860000,'2026-10-22 15:10','2026-10-24 09:20')]},
+    control:{proposer:'王敏',owner:'王敏',evidence:[evSeed('控制计划_普铣_改版.pdf',520000,'2026-10-22 16:02','2026-10-24 09:22')]},
+    process:{proposer:'王敏',owner:'王敏',evidence:[evSeed('工艺卡_换设备_改版.pdf',310000,'2026-10-22 16:40','2026-10-24 09:25')]},
+    inspect:{proposer:'陈芳',owner:'陈芳',evidence:[evSeed('检验标准_扁位_改版.pdf',280000,'2026-10-22 17:15','2026-10-24 09:28')]},
+    change:{proposer:'张伟',owner:'王敏',evidence:[]},
+    train:{proposer:'陈芳',owner:'陈芳',evidence:[]}
+  };
+  d7items.forEach(it=>{if(d7seed[it.id])Object.assign(it,d7seed[it.id]);});
+
+  return {
+    meta:{id:newReportId(),name:'支柱扁位漏加工（示例）',createdAt:nowISO(),updatedAt:nowISO(),template:'demo'},
+    stage:2,
+    d1:{members:[
+      {id:'p1',name:'张伟',dept:'质量部',role:'质量工程师、组长',contact:'138****2101',leader:true},
+      {id:'p2',name:'李强',dept:'生产部',role:'生产主管、根因分析',contact:'139****3302',leader:false},
+      {id:'p3',name:'王敏',dept:'工程部',role:'工艺工程师、措施执行',contact:'137****5518',leader:false},
+      {id:'p4',name:'陈芳',dept:'质量部',role:'检验班长、措施执行',contact:'136****7720',leader:false}
+    ],jd:null},
+    d2:{proposer:'张伟',fields:d2fields,gen:{},rate:null},
+    d3:{rows:d3rows,gen:{}},
+    d4,
+    d5:{rows:d5rows,gen:{}},
+    d6:{analyzed:true,groups:d6groups,check:null,conclusion:'',verifier:'',stale:false},
+    d7:{analyzed:true,items:d7items,check:null,stale:false,meta:{changeNo:'',effective:'',horizontal:'未做',customer:'不需要',controlFreq:'每班',processAction:'核对工序清单'}},
+    d8:{
+      contribution:{text:'',proposer:'张伟',source:'manual',jd:null},
+      lessons:{text:'',proposer:'王敏',source:'manual',jd:null},
+      observation:{text:''},
+      closer:'',date:'',
+      history:'2026-08 同失效模式（支柱扁位漏加工）8D，措施为“换设备强制核对工序清单 + 下道 100% 目视”。本次措施与上次相同，没有实质升级。',
+      report:null,stale:false,gen:{}
+    },
+    records:[]
+  };
+}
+
+function blankState(name){
+  const s=freshState();
+  s.meta={id:newReportId(),name:name||'未命名 8D',createdAt:nowISO(),updatedAt:nowISO(),template:'blank'};
+  s.stage=2;
+  s.d1={members:[{id:'p1',name:'',dept:'',role:'',contact:'',leader:true}],jd:null};
+  D2_FIELDS.forEach(f=>{s.d2.fields[f.key]={text:'',source:'manual',evidence:[],jd:null};});
+  s.d2.proposer='';s.d2.gen={};s.d2.rate=null;
+  s.d3={rows:[],gen:{}};
+  s.d4={methodPicked:false,toolList:null,tools:{},toolsJd:null,dirs:null,outputs:{},a:{proposer:'',jd:null,layers:[]},b:{proposer:'',jd:null,layers:[]}};
+  s.d5={rows:[],gen:{}};
+  s.d6={analyzed:false,groups:[],check:null,conclusion:'',verifier:'',stale:false};
+  s.d7={analyzed:false,items:[],check:null,stale:false,meta:{changeNo:'',effective:'',horizontal:'未做',customer:'不需要',controlFreq:'每班',processAction:'核对工序清单'}};
+  s.d8={contribution:{text:'',proposer:'',source:'manual',jd:null},lessons:{text:'',proposer:'',source:'manual',jd:null},observation:{text:''},closer:'',date:'',history:'',report:null,stale:false,gen:{}};
+  s.records=[];
+  return s;
+}
+
+let state = freshState();
+const SAVE_KEY='8d-copilot-mvp-v3.1';
+const LIB_KEY='8d-copilot-library-v3.1';
+let library=[], historyOpen=false;
+let AI={available:false,model:'deepseek-chat',busy:false};
+
+function persist(){
+  try{
+    ensureMeta(state,state.meta&&state.meta.name);
+    state.meta.updatedAt=nowISO();
+    const e=library.find(x=>x.id===state.meta.id);
+    if(e){e.name=state.meta.name;e.updatedAt=state.meta.updatedAt;e.state=cloneState(state);}
+    else library.unshift({id:state.meta.id,name:state.meta.name,createdAt:state.meta.createdAt,updatedAt:state.meta.updatedAt,state:cloneState(state)});
+    localStorage.setItem(LIB_KEY,JSON.stringify(library));
+    localStorage.setItem(LIB_KEY+'.current',state.meta.id);
+  }catch(e){}
+}
+function loadLibrary(){
+  try{
+    const raw=localStorage.getItem(LIB_KEY);
+    if(raw){
+      const arr=JSON.parse(raw);
+      if(Array.isArray(arr)){
+        library=arr.filter(e=>e&&e.id&&e.state).map(e=>{
+          const s=e.state;
+          if(!s.d1||!s.d2||!s.d2.fields||!s.d3||!s.d4||!s.d4.a||!s.d4.b||!s.d5||!s.d6||!Array.isArray(s.d6.groups)||!s.d7||!Array.isArray(s.d7.items)||!s.d8||!Array.isArray(s.records))return null;
+          ensureMeta(s,e.name);s.meta.id=e.id;s.meta.name=e.name||s.meta.name;
+          e.name=s.meta.name;return e;
+        }).filter(Boolean);
+        if(library.length){
+          const cur=localStorage.getItem(LIB_KEY+'.current');
+          const e=library.find(x=>x.id===cur)||library[0];
+          state=cloneState(e.state);state.meta.id=e.id;state.meta.name=e.name;
+          state.stage=Math.min(8,Math.max(1,Number(state.stage)||2));
+          return true;
+        }
+      }
+    }
+  }catch(e){}
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const s=JSON.parse(raw);
+      if(s&&s.d1&&s.d2&&s.d2.fields&&s.d3&&s.d4&&s.d5&&s.d6&&s.d7&&s.d8&&Array.isArray(s.records)){
+        ensureMeta(s,'迁移的 8D');s.stage=Math.min(8,Math.max(1,Number(s.stage)||2));
+        library=[{id:s.meta.id,name:s.meta.name,createdAt:s.meta.createdAt,updatedAt:nowISO(),state:cloneState(s)}];
+        state=s;persist();localStorage.removeItem(SAVE_KEY);return true;
+      }
+    }
+  }catch(e){}
+  return false;
+}
+
+/* ============ 渲染框架 ============ */
+function renderStage(){
+  const n=state.stage;
+  let html='';
+  if(n===1)html=d1Html();
+  else if(n===2)html=d2Html();
+  else if(n===3)html=d3Html();
+  else if(n===4)html=d4Html();
+  else if(n===5)html=d5Html();
+  else if(n===6)html=d6Html();
+  else if(n===7)html=d7Html();
+  else html=d8Html();
+  document.getElementById('stage').innerHTML=html;
+  renderPeopleList();
+  renderSteps();
+  renderStats();
+  updateChrome();
+}
+function renderPeopleList(){
+  const seen=new Set(),items=[];
+  state.d1.members.forEach(m=>{
+    const n=(m.name||'').trim();if(!n||seen.has(n))return;
+    seen.add(n);items.push({name:n,label:[m.dept,m.role].filter(Boolean).join(' · ')||'小组成员'});
+  });
+  document.getElementById('peopleList').innerHTML=items.map(x=>'<option value="'+esc(x.name)+'">'+esc(x.label)+'</option>').join('');
+}
+function renderSteps(){
+  const labels=['小组','问题','围堵','根因','措施','验证','标准','关闭'];
+  const cur=state.stage;
+  document.getElementById('steps').innerHTML=labels.map((label,i)=>{
+    const n=i+1;
+    const locked=n===7&&!d7Gate();
+    return '<button class="step '+(cur===n?'active ':'')+(locked?'locked':'')+'" onclick="go('+n+')"><span class="n">D'+n+'</span><span>'+label+'</span>'+(locked?'<span class="lock">!</span>':'')+'</button>';
+  }).join('');
+  document.getElementById('stepFill').style.width=((cur-1)/7*100)+'%';
+  const box=document.getElementById('steps'),active=box.querySelector('.step.active');
+  if(active)box.scrollLeft=Math.max(0,active.offsetLeft-box.offsetLeft-box.clientWidth/2+active.offsetWidth/2);
+}
+function updateChrome(){
+  document.getElementById('recCount').textContent=state.records.length;
+  const rp=document.getElementById('reportProposer');if(rp)rp.textContent=state.d2.proposer||'—';
+  const rn=document.getElementById('reportName');if(rn&&document.activeElement!==rn)rn.value=state.meta.name||'';
+  const rid=document.getElementById('reportId');if(rid)rid.textContent=state.meta.id||'8D-—';
+  if(!document.getElementById('recordPanel').hidden)renderRecords();
+  persist();
+}
+function renderStats(){
+  const items=[];
+  if(Object.values(state.d2.fields).some(f=>f.text.trim()))items.push({proposer:state.d2.proposer});
+  state.d3.rows.filter(r=>r.text.trim()).forEach(r=>items.push(r));
+  ['a','b'].forEach(k=>{if(state.d4[k].layers.length)items.push({proposer:state.d4[k].proposer});});
+  state.d5.rows.filter(r=>r.text.trim()).forEach(r=>items.push(r));
+  if(state.d7.analyzed)state.d7.items.forEach(it=>items.push(it));
+  if(state.d8.contribution.text.trim())items.push(state.d8.contribution);
+  if(state.d8.lessons.text.trim())items.push(state.d8.lessons);
+  const total=items.length, covered=items.filter(i=>i.proposer&&String(i.proposer).trim()).length;
+  const noEv=[...state.d3.rows,...state.d5.rows].filter(r=>r.status==='已完成'&&(!r.evidence||!r.evidence.length)).length;
+  const pct=total?Math.round(covered/total*100):100;
+  document.getElementById('stats').innerHTML=
+    '<div class="stat"><div class="stat-k">已填条目</div><div class="stat-v"><b>'+total+'</b><em>条</em></div></div>'+
+    '<div class="stat"><div class="stat-k">提出人覆盖</div><div class="stat-v"><b>'+pct+'%</b><em>'+covered+' / '+total+'</em></div></div>'+
+    '<div class="stat '+(noEv?'warn':'')+'"><div class="stat-k">已完成无证据</div><div class="stat-v"><b>'+noEv+'</b><em>D3 + D5</em></div></div>'+
+    '<div class="stat"><div class="stat-k">判断记录</div><div class="stat-v"><b>'+state.records.length+'</b><em>本份报告</em></div></div>';
+}
+function updateStats(){renderStats();}
+function stageHead(code,title,desc,note){
+  return '<div class="stage-head"><div class="sh-main"><div class="eyebrow">第 '+code+' 步 / 8 · D'+code+'</div><h1>'+title+'</h1><p>'+desc+'</p>'+(note?'<div class="head-note">'+note+'</div>':'')+'</div><div class="ghost">0'+code+'</div></div>';
+}
+function go(n){state.stage=n;renderStage();window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ============ 通用判断 / 记录 ============ */
+function J(verdict,reason,question,advice,checks){return {verdict,reason,question,advice,checks};}
+function jdHtml(j){
+  if(!j)return '';
+  const cls=j.verdict==='成立'?'ok':j.verdict==='部分成立'?'part':'bad';
+  const checks=j.checks?'<div class="jd-checks">'+j.checks.map(c=>'<div class="chk '+(c.ok?'ok':'no')+'"><span>'+(c.ok?'通过':'未通过')+'</span><div>'+esc(c.label)+(c.note?'<em> '+esc(c.note)+'</em>':'')+'</div></div>').join('')+'</div>':'';
+  return '<div class="jd '+cls+'"><div class="jd-head"><span class="verdict">'+j.verdict+'</span>'+(j.target?'<span class="jd-target">'+esc(j.target)+'</span>':'')+'</div>'+checks+
+    '<div class="jd-row"><b>理由</b><p>'+esc(j.reason)+'</p></div>'+
+    '<div class="jd-row"><b>追问</b><p>'+esc(j.question)+'</p></div>'+
+    '<div class="jd-row"><b>补充建议</b><p>'+esc(j.advice)+'</p></div></div>';
+}
+function addRecord(stage,target,verdict,reason,who){
+  state.records.unshift({time:nowStamp(),stage,target,verdict,reason:reason||'',who:who||'8D Copilot（本地规则）'});
+  updateChrome();
+}
+function recordClass(v){
+  if(/^成立$|^有效$|^齐全$|^通过$|^可以/.test(v))return 'ok';
+  if(/^部分成立$|^待观察$|^需补$|^有 \d+ 条需补/.test(v))return 'part';
+  if(/^不成立$|^无效$|^现在不能关闭/.test(v))return 'bad';
+  return '';
+}
+function toggleRecords(){
+  const p=document.getElementById('recordPanel');
+  p.hidden=!p.hidden;
+  if(!p.hidden){renderRecords();p.scrollIntoView({block:'start',behavior:'smooth'});}
+}
+function renderRecords(){
+  const body=document.getElementById('recordBody');
+  if(!state.records.length){body.innerHTML='<div class="card" style="text-align:center;color:var(--muted);font-size:12px">还没有判断记录。每点一次判断，这里留一条痕。</div>';return;}
+  body.innerHTML='<div class="table-wrap"><table class="record-table"><thead><tr><th>时间</th><th>阶段</th><th>对象 / 判断人 / 理由</th><th>结论</th></tr></thead><tbody>'+
+    state.records.slice(0,40).map(r=>{
+      const cls=recordClass(r.verdict);
+      return '<tr><td class="rt">'+esc(r.time)+'</td><td class="rt">D'+esc(r.stage)+'</td><td><div>'+esc(r.target)+'</div><div class="record-reason">'+esc(r.who||'')+(r.reason?' · '+esc(r.reason):'')+'</div></td><td class="rv '+cls+'">'+esc(r.verdict)+'</td></tr>';
+    }).join('')+'</tbody></table></div>'+(state.records.length>40?'<div class="hint" style="margin-top:6px">仅显示最近 40 条。</div>':'');
+}
+
+/* ============ D1 ============ */
+function d1Eval(members){
+  const leaders=members.filter(m=>m.leader);
+  const depts=members.map(m=>m.dept||'');
+  const hasProd=depts.some(d=>/生产|制造|车间/.test(d));
+  const hasQual=depts.some(d=>/质量|品保|QA|QC/i.test(d));
+  const rootOwner=members.some(m=>/根因|分析/.test(m.role||''));
+  const actionOwner=members.some(m=>/措施|执行/.test(m.role||''));
+  const checks=[
+    {ok:leaders.length===1,label:'有且只有一名组长',note:leaders.length===0?'现在没有组长':leaders.length>1?'现在有 '+leaders.length+' 名组长':'唯一组长：'+leaders[0].name},
+    {ok:hasProd&&hasQual,label:'覆盖发生部门和发现部门',note:!hasProd?'小组里没有生产/制造的人':!hasQual?'小组里没有质量/检验的人':'发生部门与发现部门都有人'},
+    {ok:rootOwner&&actionOwner,label:'有人承接根因分析和措施执行',note:!rootOwner?'没人负责根因分析，D4 会没人写':!actionOwner?'没人负责措施执行':'根因分析与措施执行都有人接'}
+  ];
+  const pass=checks.filter(c=>c.ok).length;
+  const verdict=pass===checks.length?'成立':pass?'部分成立':'不成立';
+  let question='谁负责把 D4 的两条链盯完？';
+  if(leaders.length!==1)question='谁来当唯一组长？另外 '+(leaders.length||0)+' 名组长怎么处理？';
+  else if(!rootOwner)question='谁负责根因分析？请把职责写到具体人。';
+  else if(!actionOwner)question='措施执行谁接？没有执行人，D5 会停在纸上。';
+  else question='谁负责把 D4 的两条链盯完？请确认这个人能调动换设备记录和检验标准。';
+  return J(verdict,
+    pass===checks.length?'组长唯一、发生和发现部门都有人、根因分析与措施执行有人接。':'3 项检查里 '+pass+' 项通过；未通过：'+checks.filter(c=>!c.ok).map(c=>c.label).join('、')+'。',
+    question,
+    pass===checks.length?'可以进入 D2。小组成员本身是“人”，不需要提出人，也不需要附件。':'补人或改职责，别让 D4/D5 落到没人接的位置。',
+    checks);
+}
+function d1Html(){
+  const rows=state.d1.members.map((m,i)=>
+    '<div class="member">'+
+      '<label><input value="'+esc(m.name)+'" placeholder="姓名" oninput="onMember(\''+m.id+'\',\'name\',this)"></label>'+
+      '<label><input value="'+esc(m.dept)+'" placeholder="部门" oninput="onMember(\''+m.id+'\',\'dept\',this)"></label>'+
+      '<label><input value="'+esc(m.role)+'" placeholder="职责" oninput="onMember(\''+m.id+'\',\'role\',this)"></label>'+
+      '<label><input value="'+esc(m.contact)+'" placeholder="联系方式" oninput="onMember(\''+m.id+'\',\'contact\',this)"></label>'+
+      '<label><select onchange="onMember(\''+m.id+'\',\'leader\',this)"><option value="否"'+(m.leader?'':' selected')+'>否</option><option value="是"'+(m.leader?' selected':'')+'>是</option></select></label>'+
+      '<button class="icon-btn" onclick="removeMember(\''+m.id+'\')">移除</button>'+
+    '</div>').join('');
+  return stageHead(1,'成立小组','先把人凑齐，指定唯一组长；成员由你选，不生成。','本阶段不配生成按钮：人员类字段没有“从无到有”的意义。')+
+    '<div class="card"><div class="card-head"><div><h2>小组成员</h2><p>覆盖发生部门和发现部门，并有人承接根因分析。</p></div><button class="btn btn-ghost btn-sm" onclick="addMember()">+ 添加成员</button></div>'+
+    '<div class="member-head"><span>姓名</span><span>部门</span><span>职责</span><span>联系方式</span><span>是否组长</span><span></span></div>'+
+    '<div>'+rows+'</div>'+
+    '<div class="actions"><span class="hint">判三件事：组长唯一、部门覆盖、有人接根因分析。</span><button class="btn btn-judge" onclick="judgeD1()">判断小组</button></div>'+
+    '<div id="jd-d1">'+(state.d1.jd?jdHtml(state.d1.jd):'')+'</div></div>';
+}
+function onMember(id,field,el){
+  const m=state.d1.members.find(x=>x.id===id);if(!m)return;
+  m[field]=field==='leader'?el.value==='是':el.value;
+  if(field==='name'||field==='dept'||field==='role')renderPeopleList();
+  markDirty();updateStats();
+}
+function addMember(){state.d1.members.push({id:uid('p'),name:'',dept:'',role:'',contact:'',leader:false});renderStage();}
+function removeMember(id){
+  if(state.d1.members.length<=1){toast('至少留一名成员。');return;}
+  if(!confirm('移除这名成员？'))return;
+  state.d1.members=state.d1.members.filter(m=>m.id!==id);renderStage();
+}
+function judgeD1(){
+  const j=d1Eval(state.d1.members);j.target='D1 · 小组成立';
+  state.d1.jd=j;addRecord('D1','小组成立',j.verdict,j.reason);
+  document.getElementById('jd-d1').innerHTML=jdHtml(j);
+}
+
+/* ============ D2 ============ */
+function d2Field(key){return state.d2.fields[key];}
+function d2Html(){
+  const proposer='<div class="card stage-lead"><div class="lead-row"><div><h2>本条问题的提出人</h2><p>这一组字段属于同一条问题，共用一个提出人；不是每个小格子挂一个人。提出人可选 D1 花名册，也可手填外部人员。</p></div><div style="width:210px;flex:none"><div class="person-wrap"><input list="peopleList" value="'+esc(state.d2.proposer)+'" placeholder="选择或手填" oninput="onD2Proposer(this)">'+personTag(state.d2.proposer)+'</div></div></div></div>';
+  return stageHead(2,'问题描述','把现象写成人能查、数能算的样子。每个文本项都有“生成”和“判断”。','判断只回答“这段逻辑站不站得住”，不替你改字；生成只给 1–3 条候选。')+
+    proposer+
+    '<div class="field-grid">'+D2_FIELDS.map(f=>d2FieldHtml(f)).join('')+'</div>';
+}
+function d2FieldHtml(f){
+  const key=f.key,st=state.d2.fields[key];
+  return '<div class="field src-host">'+
+    '<div class="field-head"><div><div class="field-label">'+f.label+'</div><div class="field-hint">'+f.hint+'</div></div>'+srcBadge(st.source)+'</div>'+
+    '<textarea id="d2-'+key+'" placeholder="'+esc(f.hint)+'" oninput="onD2Text(\''+key+'\',this)">'+esc(st.text)+'</textarea>'+
+    evBlock('d2.fields.'+key+'.evidence','ev-d2-'+key,st.evidence,'附件')+
+    (key==='howmany'?'<div id="rateBox">'+rateHtml()+'</div>':'')+
+    '<div class="actions"><button class="btn btn-gen btn-sm" onclick="genD2(\''+key+'\')">生成</button><button class="btn btn-judge btn-sm" onclick="judgeD2(\''+key+'\')">判断</button></div>'+
+    '<div id="gen-d2-'+key+'">'+(state.d2.gen[key]?candHtml(state.d2.gen[key],'adoptD2',key):'')+'</div>'+
+    '<div id="jd-d2-'+key+'">'+(st.jd?jdHtml(st.jd):'')+'</div>'+
+  '</div>';
+}
+function onD2Proposer(el){state.d2.proposer=el.value;refreshPersonTag(el);markDirty();updateStats();}
+function onD2Text(key,el){
+  const f=d2Field(key);f.text=el.value;
+  if(f.source==='ai')f.source='edited';
+  refreshBadge(el,f.source);
+  f.jd=null;const c=document.getElementById('jd-d2-'+key);if(c)c.innerHTML='';
+  markDirty();updateRate();updateStats();
+}
+function rateInfo(){
+  const t=state.d2.fields.howmany.text||'';
+  const nums=[...t.matchAll(/(\d+(?:\.\d+)?)/g)].map(m=>parseFloat(m[1]));
+  if(nums.length>=2&&nums[1]>0&&nums[0]<=nums[1])return {bad:nums[0],insp:nums[1],rate:(nums[0]/nums[1]*100).toFixed(1)};
+  return null;
+}
+function rateHtml(){
+  const r=rateInfo();
+  if(r)return '<div class="rate"><span class="rate-k">不良率（系统计算）</span><b>'+r.rate+'%</b><span class="rate-sub">'+r.bad+' ÷ '+r.insp+'；不可手填</span></div>';
+  const t=state.d2.fields.howmany.text.trim();
+  return '<div class="rate muted"><span class="rate-k">不良率（系统计算）</span><span>'+(t?'需要同时写清发生数量和检验数量':'填入发生数量和检验数量后自动计算')+'</span></div>';
+}
+function updateRate(){const b=document.getElementById('rateBox');if(b)b.innerHTML=rateHtml();}
+function d2Eval(key){
+  const f=d2Field(key),t=(f.text||'').trim(),label=D2_FIELDS.find(x=>x.key===key).label;
+  if(!t)return J('不成立','D2 的 '+label+' 还是空的。','这一项没写，D4 的根因和 D5 的措施依据什么？','补上这一项，再点判断。');
+  if(key==='what'){
+    const specific=/(未加工|漏加工|尺寸超差|超差|毛刺|变形|错装|漏装|划伤|压伤|裂纹|缺料|扁位|孔位|角度|平面度|同轴度)/.test(t);
+    const vagueOnly=/^(不良|异常|有问题|不合格|质量差)[。；，,\s]*$/.test(t)||(!specific&&/不良|异常|有问题/.test(t));
+    if(vagueOnly)return J('不成立',quote(t)+'只说了“不良/异常”，没有说清是什么缺陷模式。','这道工序到底做错了什么？是漏加工、尺寸超差，还是装反？','把缺陷模式写成可观察的特征，例如“扁位未加工”。');
+    if(!specific)return J('部分成立',quote(t)+'有描述，但还看不出可观察的缺陷特征。','检验员看到的是什么？用什么量具或方法能确认？','补一个具体缺陷模式，或挂一张缺陷实物照片。');
+    return J('成立',quote(t)+'写出了具体缺陷模式，能支撑 D4 的分析。','这个缺陷模式在检验标准里叫什么？','可以进入下一步；把缺陷实物照片挂到本项。');
+  }
+  if(key==='where'){
+    if(!/(工序|工位|设备|机台|线体|车间|产线)/.test(t))return J('部分成立',quote(t)+'还没有精确到工序、工位或设备。','发现地点到底在哪道工序、哪个工位？','补到工位或设备编号，D4 才能去看现场。');
+    return J('成立',quote(t)+'定位到了具体工序/设备，能支撑现场调查。','这个地点当天的换班/设备记录在哪里？','把现场照片或设备记录挂到本项。');
+  }
+  if(key==='when'){
+    const hasDate=/(20\d{2})[-\/年.](\d{1,2})/.test(t),hasBatch=/(批|批次|订单|工单|LOT|Lot|lot)/.test(t);
+    if(!hasDate&&!hasBatch)return J('不成立',quote(t)+'既没有日期，也没有批次或订单号。','这批货是什么时候、哪一批做的？','补时间范围 + 批次号/订单号，否则无法追溯。');
+    if(!hasBatch)return J('部分成立',quote(t)+'有时间，但没有批次号或订单号。','这个时间段里做了哪几批？出问题的是哪一批？','补批次号或订单号，D3 才能围堵到具体范围。');
+    if(!hasDate)return J('部分成立',quote(t)+'有批次，但没有发现时间。','这批是什么时候发现、什么时候生产的？','补时间范围，D3 的 72 小时时限才有基准。');
+    return J('成立',quote(t)+'时间范围和批次都有，能支撑追溯。','这批的流转记录在哪里？','把批次流转记录挂到本项。');
+  }
+  if(key==='who'){
+    if(!/(产品|件|型号|图号|零件|客户|主机厂|供应商)/.test(t))return J('部分成立',quote(t)+'还没说清受影响的是哪个产品、哪个客户。','这批货是给谁的？哪个图号/型号？','补产品与客户，影响程度才判得准。');
+    return J('成立',quote(t)+'写明了产品和客户，影响对象清楚。','同一客户还有没有其他批次受影响？','把客户投诉邮件或发货记录挂到本项。');
+  }
+  if(key==='why'){
+    if(!/(投诉|停线|停机|报废|返工|退货|索赔|客户|流出)/.test(t))return J('部分成立',quote(t)+'还没有写清影响程度。','是客户投诉、停线、报废，还是返工？','补影响类型和数量，D3 才知道先围堵哪里。');
+    return J('成立',quote(t)+'写清了影响类型，能判断围堵优先级。','客户端现在还能不能截住？','把客户投诉邮件或停线记录挂到本项。');
+  }
+  if(key==='how'){
+    if(!/(自检|专检|巡检|抽检|全检|首检|末检|客户反馈|检验)/.test(t))return J('部分成立',quote(t)+'还没说清是怎么发现的。','是自检、专检、巡检，还是客户反馈？','补发现方式，D4 的检验链才有起点。');
+    return J('成立',quote(t)+'写明了发现方式，能支撑 B 链分析。','发现时已经流出了多少？','把检验记录挂到本项。');
+  }
+  if(key==='howmany'){
+    const nums=[...t.matchAll(/(\d+(?:\.\d+)?)/g)].map(m=>parseFloat(m[1]));
+    const vague=/(若干|多批|少量|一些|部分|很多|较多)/.test(t);
+    if(vague&&nums.length<2)return J('不成立',quote(t)+'里的“'+t.match(/(若干|多批|少量|一些|部分|很多|较多)/)[1]+'”不能作为数量。','本批到底发生多少件、检验多少件？','写清发生数量和检验数量，不良率由系统算。');
+    if(nums.length<2)return J('部分成立',quote(t)+'只看到一个数量，算不出不良率。','发生数量和检验数量分别是多少？','补齐两个数，系统会自动算不良率，不允许手填。');
+    const [bad,insp]=nums;
+    if(insp<=0||bad>insp)return J('部分成立',quote(t)+'里的发生数量和检验数量对不上。','发生数怎么会大于检验数？分母到底是哪一批？','核对两个数的口径，再让系统算。');
+    return J('成立',quote(t)+'两个数都有，系统算出不良率 '+((bad/insp)*100).toFixed(1)+'%。','这个不良率的分母是本批全检数，还是抽检数？','把检验记录截图挂到本项，注明口径。');
+  }
+  if(key==='isnot'){
+    const hasIs=/有[：:]/.test(t)||/哪些有/.test(t),hasNot=/没有|无[：:]/.test(t)||/哪些没有/.test(t);
+    if(hasIs&&hasNot)return J('成立',quote(t)+'写出了“有/没有”的对比，能帮 D4 收窄范围。','这些“没有”的批次/设备，能不能作为对照去查？','把对比依据（批次、设备、班次）挂到本项。');
+    return J('部分成立',quote(t)+'还没有形成“哪些有、哪些没有”的对比。','同样的问题，哪些批次/设备没有发生？','补上对比信息，D4 会好做很多。');
+  }
+  return J('部分成立','这一项还没法判断。','请把这一项写具体。','补证据后再判断。');
+}
+async function genD2(key){
+  const local=d2Candidates(key);
+  state.d2.gen[key]=local.slice(0,3);renderStage();
+  if(!AI.available)return;
+  const label=D2_FIELDS.find(x=>x.key===key).label;
+  try{
+    const c=await aiCandidates('D2',label,state.d2.fields[key].text,'按 5W2H + Is/Is-Not 补全这一项');
+    if(c.length){state.d2.gen[key]=c;renderStage();toast('DeepSeek 已生成 '+c.length+' 条候选。');}
+  }catch(e){toast('DeepSeek 未返回，保留本地候选。');}
+}
+function d2Candidates(key){
+  const g=k=>state.d2.fields[k].text.trim();
+  const base={
+    what:[
+      {text:'支柱扁位未加工，扁位尺寸与图纸不符',basis:'针对 D2：支柱、扁位；补成可观察缺陷'},
+      {text:'支柱在普铣工序漏加工扁位，导致装配无法到位',basis:'针对 D2 Where：普铣工序；指向后果'},
+      {text:'扁位未加工（漏工序），属功能性缺陷',basis:'针对 D2 What：把“漏工序”写成缺陷模式'}
+    ],
+    where:[
+      {text:'普铣工序，换班后第一小时，2 号普铣',basis:'针对 D2 When/Where：换班后、2 号普铣'},
+      {text:'普铣工序 2 号机，下午换班后首件至第一小时',basis:'针对 D2 When：时间集中'},
+      {text:'普铣工序换设备后的首件区域',basis:'针对 D2 How：自检发现的位置'}
+    ],
+    when:[
+      {text:'2026-10-18 下午换班后，批次 20261018-A',basis:'针对 D2 Where：换班后第一小时'},
+      {text:'2026-10-18 16:00—17:00，批次 20261018-A',basis:'针对 D2 What/Where：把时间收紧到小时'},
+      {text:'2026-10-18 下午换班后首小时，订单 20261018-A',basis:'针对 D2 Who：客户批次'}
+    ],
+    who:[
+      {text:'产品：支柱；客户：华东某主机厂（示例）',basis:'针对 D2 What：支柱、扁位'},
+      {text:'受影响产品：支柱；客户：华东某主机厂；图号：以 D2 实物为准',basis:'针对 D2 What：补受影响对象'},
+      {text:'产品：支柱；客户：华东某主机厂；涉及批次 20261018-A',basis:'针对 D2 When：批次范围'}
+    ],
+    why:[
+      {text:'客户投诉，已流出 200 件，厂内 120 件待处理',basis:'针对 D2 Who/Howmany：客户与数量'},
+      {text:'客户投诉并停线，已流出 200 件，厂内 120 件待复检',basis:'针对 D2 How：补影响类型'},
+      {text:'客户投诉，已流出 200 件；厂内 120 件需全检，存在返工成本',basis:'针对 D2 Howmany：把影响写具体'}
+    ],
+    how:[
+      {text:'自检发现，随后对该批 120 件全检',basis:'针对 D2 Howmany：检验数量 120'},
+      {text:'下道自检发现扁位未加工，追溯后对该批全检',basis:'针对 D2 Where：下道发现'},
+      {text:'自检发现，客户处另发现 200 件流出',basis:'针对 D2 Why：客户流出'}
+    ],
+    howmany:[
+      {text:'发生 3 件，检验 120 件',basis:'针对 D2 What/Where：本批 120 件'},
+      {text:'发生 3 件，检验 120 件，不良率 2.5%',basis:'系统会算不良率，不用手填百分数'},
+      {text:'本批发生 3 件，已检验 120 件；另流出 200 件待客户确认',basis:'针对 D2 Why：把流出单独写'}
+    ],
+    isnot:[
+      {text:'有：下午换班后第一小时、2 号普铣；没有：其余时段、1 号普铣',basis:'针对 D2 When/Where：时间与设备对比'},
+      {text:'有：换设备后的首件；没有：连续生产时段的件',basis:'针对 D2 How：换设备场景'},
+      {text:'有：批次 20261018-A；没有：前一班次批次',basis:'针对 D2 When：批次对比'}
+    ]
+  };
+  return base[key]||[
+    {text:g(key)||'请补充这一项',basis:'按 D2 已有内容推断'}
+  ];
+}
+function adoptD2(key,i){
+  const c=(state.d2.gen[key]||[])[i];if(!c)return;
+  const f=d2Field(key);f.text=c.text;f.source='ai';f.jd=null;state.d2.gen[key]=null;
+  renderStage();toast('已填入候选；人名没有被自动填。');
+}
+async function judgeD2(key){
+  const f=d2Field(key),label=D2_FIELDS.find(x=>x.key===key).label,text=f.text;
+  const local=d2Eval(key);local.target='D2 · '+label;
+  f.jd=local;
+  let box=document.getElementById('jd-d2-'+key);if(box)box.innerHTML=jdHtml(local);
+  if(!AI.available){addRecord('D2',local.target,local.verdict,local.reason);return;}
+  try{
+    const j=await aiJudge('D2',local.target,text);
+    if(f.text!==text)return;
+    f.jd=j;box=document.getElementById('jd-d2-'+key);if(box)box.innerHTML=jdHtml(j);
+    addRecord('D2',j.target,j.verdict,j.reason,'DeepSeek（模型）');
+  }catch(e){
+    addRecord('D2',local.target,local.verdict,local.reason);
+    toast('DeepSeek 未返回，保留本地判断。');
+  }
+}
+
+/* ============ D3 ============ */
+function d3row(id){return state.d3.rows.find(r=>r.id===id);}
+function d3Html(){
+  return stageHead(3,'临时遏制措施','先止血：72 小时内能做完的事，别把永久措施塞进来。','每条措施单独挂提出人和责任人；生成只填措施内容，不填人名。')+
+    '<div class="card"><div class="card-head"><div><h2>遏制措施</h2><p>每条一行：措施、提出人、执行责任人、完成时限、执行状态、证据。</p></div><button class="btn btn-ghost btn-sm" onclick="addD3()">+ 新增措施</button></div>'+
+    state.d3.rows.map((r,i)=>d3RowHtml(r,i)).join('')+
+    '<div class="hint" style="margin-top:8px">判四件事：是不是临时措施、是否针对 D2、已完成有没有证据、已流出有没有客户端措施。</div></div>';
+}
+function d3RowHtml(r,i){
+  return '<div class="row-card src-host" id="row-'+r.id+'">'+
+    '<div class="row-head"><span class="row-no">措施 '+pad(i+1)+'</span><div class="row-head-right">'+srcBadge(r.source)+'<button class="icon-btn" onclick="removeD3(\''+r.id+'\')">移除</button></div></div>'+
+    '<textarea placeholder="措施内容：先写能立刻做的围堵动作" oninput="onD3Text(\''+r.id+'\',this)">'+esc(r.text)+'</textarea>'+
+    '<div class="grid4" style="margin-top:8px">'+
+      personInput('提出人',r.proposer,'onD3Field(\''+r.id+'\',\'proposer\',this)')+
+      personInput('执行责任人',r.owner,'onD3Field(\''+r.id+'\',\'owner\',this)')+
+      '<label class="mini-field"><span>完成时限 *</span><input type="datetime-local" value="'+esc(r.due)+'" onchange="onD3Field(\''+r.id+'\',\'due\',this)"></label>'+
+      '<label class="mini-field"><span>执行状态</span><select onchange="onD3Field(\''+r.id+'\',\'status\',this)">'+['待执行','执行中','已完成'].map(s=>'<option'+(r.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+    '</div>'+
+    evBlock('d3.rows.'+i+'.evidence','ev-d3-'+r.id,r.evidence,'证据上传')+
+    '<div class="actions"><button class="btn btn-gen btn-sm" onclick="genD3(\''+r.id+'\')">生成</button><button class="btn btn-judge btn-sm" onclick="judgeD3(\''+r.id+'\')">判断</button></div>'+
+    '<div id="gen-d3-'+r.id+'">'+(state.d3.gen[r.id]?candHtml(state.d3.gen[r.id],'adoptD3',r.id):'')+'</div>'+
+    '<div id="jd-d3-'+r.id+'">'+(r.jd?jdHtml(r.jd):'')+'</div>'+
+  '</div>';
+}
+function onD3Text(id,el){
+  const r=d3row(id);if(!r)return;r.text=el.value;
+  if(r.source==='ai')r.source='edited';refreshBadge(el,r.source);
+  r.jd=null;const c=document.getElementById('jd-d3-'+id);if(c)c.innerHTML='';
+  markDirty();updateStats();
+}
+function onD3Field(id,field,el){
+  const r=d3row(id);if(!r)return;r[field]=el.value;
+  r.jd=null;const c=document.getElementById('jd-d3-'+id);if(c)c.innerHTML='';
+  markDirty();updateStats();
+}
+function addD3(){
+  state.d3.rows.push({id:uid('t'),text:'',proposer:'',owner:'',due:'',status:'待执行',evidence:[],source:'manual',jd:null});
+  renderStage();
+}
+function removeD3(id){if(!confirm('移除这条临时措施？'))return;state.d3.rows=state.d3.rows.filter(r=>r.id!==id);renderStage();}
+function problemDate(){
+  const t=state.d2.fields.when.text||'';
+  const m=t.match(/(20\d{2})[-\/年.](\d{1,2})[-\/月.](\d{1,2})/);
+  return m?new Date(+m[1],+m[2]-1,+m[3],8,0,0):null;
+}
+function d3Hours(r){
+  if(!r.due)return null;
+  const base=problemDate();
+  if(!base)return null;
+  return (new Date(r.due)-base)/36e5;
+}
+function d3Eval(r){
+  const t=(r.text||'').trim();
+  if(!t)return J('不成立','这条措施还是空的。','D3 要围堵什么？先写一个 72 小时内能做完的动作。','补措施内容，再指定提出人和责任人。');
+  const findings=[];
+  if(r.status==='已完成'&&(!r.evidence||!r.evidence.length))findings.push({sev:3,text:'选了“已完成”，但没有上传任何证据。'});
+  const permanent=/工装|图纸|工艺|程序|FMEA|控制计划|变更/.test(t);
+  const hrs=d3Hours(r);
+  if(permanent|| (hrs!=null&&hrs>72))findings.push({sev:2,text:(hrs!=null&&hrs>72?'时限 '+Math.round(hrs)+' 小时，超过 72 小时。':'')+(permanent?'措施涉及改工装/图纸/工艺，属于永久措施，该放 D5。':'')});
+  const defectKeys=['扁位','漏加工','未加工','缺陷','不良','尺寸'];
+  const containment=/(复检|全检|检验|拦截|隔离|暂停|返工|挑选|标识|追溯|客户|发货|放行)/.test(t);
+  const relevant=containment||defectKeys.some(k=>t.includes(k));
+  if(!relevant&&!permanent)findings.push({sev:2,text:'这条措施看不出针对 D2 的哪个缺陷现象。'});
+  const why=state.d2.fields.why.text||'';
+  if(/客户|流出/.test(why)){
+    const client=state.d3.rows.some(x=>/(客户|拦截|召回|通知|签收)/.test(x.text||''));
+    if(!client)findings.push({sev:3,text:'D2 写了已流出客户，但 D3 没有客户端措施。'});
+  }
+  if(!r.owner)findings.push({sev:1,text:'没有指定执行责任人。'});
+  if(!r.due)findings.push({sev:1,text:'没有填完成时限。'});
+  if(!findings.length)return J('成立',quote(t)+'是临时动作、对应 D2 的缺陷，责任人和时限都有。','这条措施的证据在哪里？','可以保留；把复检/拦截记录挂到本项。');
+  const top=findings.sort((a,b)=>b.sev-a.sev)[0];
+  let question='这条措施对应 D2 的哪个缺陷现象？请指出来。';
+  if(/已完成/.test(top.text))question='选了已完成，证据在哪？没有证据的完成，怎么证明做过？';
+  else if(/永久措施|72 小时/.test(top.text))question='这条措施改变的是临时围堵，还是永久条件？72 小时内做不完，为什么还放在 D3？';
+  else if(/客户端/.test(top.text))question='货已经流到客户，客户端由谁拦截、什么时候确认签收？';
+  else if(/责任人/.test(top.text))question='这条措施谁执行？请指定责任人。';
+  else if(/时限/.test(top.text))question='这条措施什么时候完成？过了 72 小时就不算临时围堵了。';
+  const hard=findings.some(f=>f.sev===3);
+  return J(hard?'不成立':'部分成立',findings.map(f=>f.text).join(' '),question,'把永久措施移到 D5；已完成必须有证据；已流出必须有客户端动作。');
+}
+async function genD3(id){
+  const r=d3row(id);if(!r)return;
+  const c=[
+    {text:'该批 120 件 100% 复检扁位',basis:'针对 D2：检验 120 件、发生 3 件'},
+    {text:'已发出的 200 件通知客户拦截，销售确认签收清单',basis:'针对 D2：已流出 200 件'},
+    {text:'在制品暂停流转，待扁位复检合格后放行',basis:'针对 D2 Where：普铣工序在制品'}
+  ];
+  state.d3.gen[id]=c.slice(0,3);renderStage();
+  if(!AI.available)return;
+  try{
+    const ai=await aiCandidates('D3','临时遏制措施',r.text,'只能给 72 小时内能完成的临时围堵；不要永久措施，不要填人名');
+    if(ai.length){state.d3.gen[id]=ai;renderStage();toast('DeepSeek 已生成 '+ai.length+' 条围堵候选。');}
+  }catch(e){toast('DeepSeek 未返回，保留本地候选。');}
+}
+function adoptD3(id,i){
+  const c=(state.d3.gen[id]||[])[i],r=d3row(id);if(!c||!r)return;
+  r.text=c.text;r.source='ai';r.jd=null;delete state.d3.gen[id];
+  renderStage();toast('已填入候选；责任人、时限没有自动填。');
+}
+async function judgeD3(id){
+  const r=d3row(id);if(!r)return;
+  const text=r.text,local=d3Eval(r);local.target='D3 · 措施 '+(state.d3.rows.indexOf(r)+1);
+  r.jd=local;
+  let box=document.getElementById('jd-d3-'+id);if(box)box.innerHTML=jdHtml(local);
+  if(!AI.available){addRecord('D3',local.target,local.verdict,local.reason);return;}
+  try{
+    const j=await aiJudge('D3',local.target,text,'临时围堵必须 72 小时内完成；已完成必须有证据；已流出必须有客户端动作；永久措施应归 D5');
+    if(r.text!==text)return;
+    r.jd=j;box=document.getElementById('jd-d3-'+id);if(box)box.innerHTML=jdHtml(j);
+    addRecord('D3',j.target,j.verdict,j.reason,'DeepSeek（模型）');
+  }catch(e){addRecord('D3',local.target,local.verdict,local.reason);toast('DeepSeek 未返回，保留本地判断。');}
+}
+
+/* ============ D4 ============ */
+function d4Html(){
+  const selected=selectedTools();
+  return stageHead(4,'根本原因','先选方法，再按双链做分析：A 链为什么发生，B 链为什么没拦住。','5Why 必须两条链；B 链不能只写“检验员漏检”。')+
+    '<div class="card stage-lead"><div class="lead-row"><div><h2>先让它推荐方法，你再选</h2><p>推荐不是命令：5Why 默认必选，其余按 D2 的数据标“建议”；你可以取消，也可以手动加。</p></div><div class="lead-actions"><button class="btn btn-gen" onclick="analyzeMethods()">推荐分析方法</button><button class="btn btn-ghost" onclick="genDirections()">生成根因方向</button></div></div>'+
+      (state.d4.dirs?dirsHtml():'')+
+    '</div>'+
+    (state.d4.methodPicked?toolsCard(selected):'')+
+    chainHtml('a')+chainHtml('b')+
+    '<div class="card demo"><div class="card-head"><div><h3>试一句，看看它怎么判</h3><p>这两个是 PRD 里的反例，只用来演示，不会写进报告。</p></div></div><div class="actions"><button class="btn btn-ghost btn-sm" onclick="demoJudge(\'a\')">试 A 链：“操作工疏忽，忘了排普铣”</button><button class="btn btn-ghost btn-sm" onclick="demoJudge(\'b\')">试 B 链：“检验员漏检”</button></div><div id="demoJd"></div></div>';
+}
+function analyzeMethods(){
+  const d2=k=>state.d2.fields[k].text||'';
+  const rec={
+    why:true,
+    fish:/跨|多个|工程|生产|供应商/.test(d2('where')+d2('why')),
+    pareto:/(两种|多种|分类|划伤.*变形|变形.*划伤)/.test(d2('what')),
+    strata:/换班|班次|下午|夜班|设备|机台/.test(d2('when')+d2('where')),
+    check:/自检|巡检/.test(d2('how')),
+    hist:/尺寸超差|角度不对|平面度|同轴度|连续数值/.test(d2('what')),
+    scatter:/参数|转速|余量|变形/.test(d2('why')),
+    control:/长期|反复|连续/.test(d2('when')),
+    fta:/安全|功能失效|停线/.test(d2('why'))
+  };
+  state.d4.toolList=TOOLS.map(t=>({...t,rec:!!rec[t.id],recText:rec[t.id]?'建议':'可选'}));
+  state.d4.tools={};
+  state.d4.toolList.forEach(t=>{if(t.rec||t.locked)state.d4.tools[t.id]=true;});
+  state.d4.methodPicked=true;state.d4.toolsJd=null;
+  addRecord('D4','推荐分析方法','已推荐',state.d4.toolList.filter(t=>t.rec).map(t=>t.name).join('、'));
+  renderStage();toast('已按 D2 推荐方法；5Why 必选，其余可取消。');
+}
+function selectedTools(){return Object.keys(state.d4.tools||{}).filter(k=>state.d4.tools[k]);}
+function toolsCard(selected){
+  const list=state.d4.toolList||TOOLS.map(t=>({...t,rec:!!t.locked,recText:'可选'}));
+  return '<div class="card"><div class="card-head"><div><h2>分析方法</h2><p>选了方法就要有产出；产出物作为证据挂载，系统不做图形识别。</p></div><button class="btn btn-judge btn-sm" onclick="judgeTools()">判断工具选择</button></div>'+
+    '<div class="table-wrap"><table class="tool-table"><thead><tr><th></th><th>工具</th><th>什么时候推荐</th><th>依据 D2 的哪一条</th></tr></thead><tbody>'+
+    list.map(t=>{
+      const checked=!!state.d4.tools[t.id];
+      return '<tr><td><label class="check"><input type="checkbox" '+(checked?'checked':'')+' '+(t.locked?'disabled':'')+' onchange="toggleTool(\''+t.id+'\',this.checked)"></label></td><td><b>'+t.name+'</b>'+(t.locked?'<span class="tag must">必选</span>':t.rec?'<span class="tag rec">建议</span>':'')+'</td><td>'+t.when+'</td><td>'+t.basis+'</td></tr>';
+    }).join('')+'</tbody></table></div>'+
+    toolOutputsHtml(selected)+
+    '<div id="jd-tools">'+(state.d4.toolsJd?jdHtml(state.d4.toolsJd):'')+'</div></div>';
+}
+function toolOutputsHtml(selected){
+  const outs=selected.filter(k=>k!=='why');
+  if(!outs.length)return '';
+  return '<div class="tool-outputs">'+outs.map(id=>{
+    const t=TOOLS.find(x=>x.id===id);const o=state.d4.outputs[id]||{text:'',evidence:[]};
+    return '<div class="tool-out"><div class="tool-out-head"><b>'+t.name+' 产出</b><span class="hint">写清看到了什么，或传图/表</span></div><textarea oninput="onToolOut(\''+id+'\',this)">'+esc(o.text)+'</textarea>'+evBlock('d4.outputs.'+id+'.evidence','ev-tool-'+id,o.evidence,'证据')+'</div>';
+  }).join('')+'</div>';
+}
+function toggleTool(id,checked){
+  if(id==='why')return;
+  state.d4.tools[id]=checked;
+  if(checked&&!state.d4.outputs[id])state.d4.outputs[id]={text:'',evidence:[]};
+  state.d4.toolsJd=null;renderStage();
+}
+function onToolOut(id,el){
+  if(!state.d4.outputs[id])state.d4.outputs[id]={text:'',evidence:[]};
+  state.d4.outputs[id].text=el.value;state.d4.toolsJd=null;
+  const j=document.getElementById('jd-tools');if(j)j.innerHTML='';
+  markDirty();
+}
+function judgeTools(){
+  const sel=selectedTools();
+  const issues=[];
+  if(sel.includes('pareto')&&!/两种|多种|分类|划伤.*变形|变形.*划伤/.test(state.d2.fields.what.text||'')){
+    issues.push({v:'不成立',text:'选了柏拉图，但 D2 里只写了一种缺陷、没有分类计数——没有分类数据，柏拉图画不出来。'});
+  }
+  if(sel.includes('strata')&&!/换班|班次|设备|机台|批/.test(state.d2.fields.when.text+state.d2.fields.where.text)){
+    issues.push({v:'部分成立',text:'选了层别法，但 D2 没有显示时间/设备/批次的集中趋势，分层维度从哪里来？'});
+  }
+  sel.filter(k=>k!=='why').forEach(id=>{
+    const o=state.d4.outputs[id]||{text:'',evidence:[]};
+    if(!o.text.trim()&&(!o.evidence||!o.evidence.length))issues.push({v:'部分成立',text:'选了“'+(TOOLS.find(t=>t.id===id)||{}).name+'”却没有任何产出，等于没做。'});
+  });
+  const verdict=issues.some(x=>x.v==='不成立')?'不成立':issues.length?'部分成立':'成立';
+  const j=J(verdict,
+    issues.length?issues.map(x=>x.text).join(' '):'所选工具与 D2 的数据能对上，且都有产出。',
+    issues.length?'你选的工具，D2 里有对应的数据或分类吗？没有的话，是补数据还是换工具？':'这些工具的产出物，能不能支撑 A/B 两条链的每一层？',
+    issues.length?'要么补数据，要么取消不匹配的工具；选了就要交产出。':'把工具产出物挂到对应层级，别只放在工具区。');
+  j.target='D4 · 工具选择';
+  state.d4.toolsJd=j;addRecord('D4','工具选择',j.verdict,j.reason);
+  const box=document.getElementById('jd-tools');if(box)box.innerHTML=jdHtml(j);
+}
+function dirsHtml(){
+  return '<div class="dir-grid">'+state.d4.dirs.map(d=>'<div class="dir"><span class="dir-tag">根因方向 · 不是结论</span><b>'+esc(d.text)+'</b><p>去看：'+esc(d.look)+'<br>依据：'+esc(d.basis)+'</p></div>').join('')+'</div>';
+}
+async function genDirections(){
+  state.d4.dirs=[
+    {text:'换班后第一小时，换设备/插急单时是否漏掉工序核对？',look:'换设备记录、换班记录、2 号普铣运行记录',basis:'D2 When / Where'},
+    {text:'换设备作业规定里，有没有“核对工序清单”这一步？设备能不能在未确认时直接启动？',look:'换设备作业规定、设备启动条件',basis:'D2 How / 现场'},
+    {text:'扁位在检验标准里是不是必检项？量具、频次、抽样能不能覆盖？',look:'检验标准、检验指导书、量具清单',basis:'D2 Why / How'}
+  ];
+  renderStage();
+  if(!AI.available){toast('给了 3 个方向；不是结论，去看记录再写 5Why。');return;}
+  try{
+    const sys='你是 8D Copilot 的根因方向助手。只给可去现场核查的方向，不给结论，不生成人名。只输出 JSON。';
+    const user='阶段：D4 根因\n报告上下文：\n'+aiContext()+'\n\n给 2-3 个可查的根因方向，覆盖发生链和流出链。严格输出：{"directions":[{"text":"方向","look":"去看什么记录/现场","basis":"依据哪条 D2 信息"}]}';
+    const raw=await callAI([{role:'system',content:sys},{role:'user',content:user}],{max_tokens:700});
+    const obj=parseAIJson(raw),arr=Array.isArray(obj.directions)?obj.directions:[];
+    if(arr.length){state.d4.dirs=arr.slice(0,3).map(d=>({text:String(d.text||'').slice(0,300),look:String(d.look||'相关记录').slice(0,300),basis:String(d.basis||'DeepSeek').slice(0,160)}));renderStage();toast('DeepSeek 给了 '+arr.length+' 个根因方向，不是结论。');}
+  }catch(e){toast('DeepSeek 未返回，保留本地根因方向。');}
+}
+function chainHtml(type){
+  const c=state.d4[type],other=state.d4[type==='a'?'b':'a'];
+  const title=type==='a'?'发生原因链':'流出原因链';
+  const sub=type==='a'?'为什么这个缺陷被做出来了？终止在系统条件：没有定位、没有防错、参数不可控、要求没传达。':'为什么做出来了没被拦住？终止在某道检验本该发现却没发现。';
+  return '<div class="card chain"><div class="chain-head"><div class="chain-title"><span class="chain-badge '+(type==='b'?'b':'')+'">'+type.toUpperCase()+'</span><div><h3>'+title+'</h3><p>'+sub+'</p></div></div><div class="chain-side">'+personInput('提出人',c.proposer,'onChainPerson(\''+type+'\',this)')+'<button class="btn btn-judge btn-sm" onclick="judgeChain(\''+type+'\')">判断整条链</button></div></div>'+
+    (type==='b'?'<div class="chain-four"><b>B 链四问</b> ① 这个特征是必检项吗？ ② 用什么方法/量具检？ ③ 频次和抽样覆盖得住吗？ ④ 拿故意做坏的件验证过检出能力吗？</div>':'')+
+    (!other.layers.length?'<div class="inline-warn">'+(type==='a'?'B 链还是空的：你只答了为什么做错，没答为什么没拦住。':'A 链还是空的：缺发生原因，措施只能治症状。')+'</div>':'')+
+    c.layers.map((l,i)=>layerHtml(type,l,i)).join('')+
+    '<div class="actions"><button class="btn btn-ghost btn-sm" onclick="addLayer(\''+type+'\')">+ 加一层</button><span class="hint">最多 5 层；每层都要有回答、依据、证据。</span></div>'+
+    '<div id="jd-chain-'+type+'">'+(c.jd?jdHtml(c.jd):'')+'</div></div>';
+}
+function layerHtml(type,l,i){
+  return '<div class="layer src-host" id="layer-'+l.id+'"><div class="layer-no">'+(i+1)+'</div><div class="layer-body">'+
+    '<div class="layer-head"><span class="layer-q">第 '+(i+1)+' 层</span>'+srcBadge(l.source||'manual')+'<button class="icon-btn" onclick="removeLayer(\''+type+'\',\''+l.id+'\')">移除</button></div>'+
+    '<textarea placeholder="回答“为什么”，要可观察，不要写“可能/应该是”" oninput="onLayerText(\''+type+'\',\''+l.id+'\',\'answer\',this)">'+esc(l.answer)+'</textarea>'+
+    '<label class="mini-field" style="margin-top:6px"><span>判定依据（数据 / 记录 / 试验）</span><input value="'+esc(l.basis)+'" placeholder="指向具体记录、数据或试验" oninput="onLayerText(\''+type+'\',\''+l.id+'\',\'basis\',this)"></label>'+
+    evBlock('d4.'+type+'.layers.'+i+'.evidence','ev-layer-'+l.id,l.evidence,'这一层的证据')+
+    '<div class="actions"><button class="btn btn-judge btn-sm" onclick="judgeLayer(\''+type+'\',\''+l.id+'\')">判断这一层</button></div>'+
+    '<div id="jd-layer-'+l.id+'">'+(l.jd?jdHtml(l.jd):'')+'</div>'+
+  '</div></div>';
+}
+function onChainPerson(type,el){state.d4[type].proposer=el.value;refreshPersonTag(el);markDirty();updateStats();}
+function onLayerText(type,id,field,el){
+  const l=state.d4[type].layers.find(x=>x.id===id);if(!l)return;
+  l[field]=el.value;
+  if(field==='answer'&&l.source==='ai'){l.source='edited';refreshBadge(el,l.source);}
+  l.jd=null;state.d4[type].jd=null;
+  const a=document.getElementById('jd-layer-'+id);if(a)a.innerHTML='';
+  const b=document.getElementById('jd-chain-'+type);if(b)b.innerHTML='';
+  staleD6();staleD7();markDirty();
+}
+function addLayer(type){
+  const c=state.d4[type];
+  if(c.layers.length>=5){toast('最多 5 层；写不下去时，回到依据和证据。');return;}
+  c.layers.push({id:uid(type),answer:'',basis:'',evidence:[],jd:null,source:'manual'});
+  staleD6();staleD7();markDirty();renderStage();
+}
+function removeLayer(type,id){
+  if(!confirm('移除这一层？'))return;
+  const c=state.d4[type];c.layers=c.layers.filter(l=>l.id!==id);c.jd=null;staleD6();staleD7();markDirty();renderStage();
+}
+function d4LayerEval(type,l){
+  const t=(l.answer||'').trim();
+  if(!t)return J('不成立','这一层还是空的。','这一层的“为什么”是什么？请写一个可观察的事实。','补回答，再写依据。');
+  const system=/(没有|缺失|未规定|不可控|无法|不能|防错|互锁|清单|标准|频次|量具|传感器|定位|报警|参数)/;
+  const people=/(操作工|员工|操作者|检验员|人员|作业员|师傅)[^。；\n]{0,24}(疏忽|忘了|不熟|未按|不按|培训不足|责任心|意识|大意|漏检|违规)|(培训不足|责任心不强|质量意识|意识不够|未按SOP)/.test(t);
+  const ri=rateInfo();const bad=ri?ri.bad:3,insp=ri?ri.insp:120;
+  if(people&&!system.test(t)){
+    const q=type==='a'
+      ?'“不熟/疏忽”的人应该整批都漏，为什么 '+insp+' 件里只漏 '+bad+' 件？这 '+bad+' 件和另外 '+(insp-bad)+' 件在流转上有什么不同？'
+      :'这个特征在检验标准里是必检项吗？如果标准里根本没有这一项，那不是漏检，是根本没规定要检。这两种原因，改法完全不同。';
+    return J('不成立',quote(t)+'把原因停在人的注意力/熟练度上，后面能接的措施只能是培训、考核、加检查——这三样都不改变这个错为什么会被犯。',q,type==='a'?'往下问：这 '+bad+' 件和其余件在设备、班次、流转上有什么不同？':'往下问：哪道检验本该发现？检什么、用什么检、频次能不能覆盖？');
+  }
+  if(type==='b'&&/漏检/.test(t)&&!/(检什么|必检|检验项|标准|量具|频次|抽样|检出)/.test(t)){
+    return J('不成立',quote(t)+'里的“漏检”没说清检的是什么。','这个特征在检验标准里是必检项吗？如果标准里根本没有这一项，那不是漏检，是根本没规定要检。','把“漏检”拆成：哪道检验、检什么、用什么、频次多少、检出能力验证过没有。');
+  }
+  if(!l.basis||!l.basis.trim())return J('部分成立','这一层有回答，但没有判定依据。','哪份数据、记录或试验能证明这句话？','补判定依据，指向具体记录/数据。');
+  if(/(可能|应该|大概|估计)/.test(l.basis)&&l.basis.trim().length<16)return J('部分成立','判定依据里出现了“可能/应该/大概”，还不是可查的事实。','这句话背后是哪份记录？请写出文件名或数据口径。','把推测换成记录、数据或试验结果。');
+  if(!l.evidence||!l.evidence.length)return J('部分成立','这一层有回答和依据，但没有实物或文件支撑。','客户或内审追问时，你拿哪份东西给他看？','把这一层的记录/照片/试验挂到证据。');
+  const isLast=state.d4[type].layers[state.d4[type].layers.length-1].id===l.id;
+  if(isLast){
+    if(type==='a'&&!/(没有|缺失|未规定|不可控|无.*(防错|定位|清单|提醒)|不能)/.test(t))return J('部分成立',quote(t)+'还停在动作或现象，没有落到系统条件。','如果只是这个动作，换个新人、赶货、插单，同样的错还会不会发生？','把终止层写成“缺了什么条件”，例如没有防错、没有定位、参数不可控、要求没传到工序。');
+    if(type==='b'&&!/(检验项|检验标准|必检|频次|抽样|量具|检出能力|检具)/.test(t))return J('部分成立',quote(t)+'还没说清哪道检验、检什么、为什么检不到。','这道检验是必检项吗？用什么量具、什么频次？检出能力验证过没有？','把 B 链终止层写到检验标准/检验项/检出能力这一层。');
+  }
+  return J('成立',quote(t)+'是可观察的回答，依据和证据都挂上了。','这一层和上一层的“为什么”能直接对上吗？','可以保留；确认证据对应的是这一层结论。');
+}
+async function judgeLayer(type,id){
+  const l=state.d4[type].layers.find(x=>x.id===id);if(!l)return;
+  const answer=l.answer,local=d4LayerEval(type,l);local.target='D4 · '+type.toUpperCase()+' 链第 '+(state.d4[type].layers.indexOf(l)+1)+' 层';
+  l.jd=local;state.d4[type].jd=null;
+  let box=document.getElementById('jd-layer-'+id);if(box)box.innerHTML=jdHtml(local);
+  const cb=document.getElementById('jd-chain-'+type);if(cb)cb.innerHTML='';
+  if(!AI.available){addRecord('D4',local.target,local.verdict,local.reason);return;}
+  try{
+    const j=await aiJudge('D4',local.target,answer,type==='a'?'这是发生原因链。终止层必须落到系统条件；停在操作工疏忽/不熟/责任心就判不成立。':'这是流出原因链。要说清哪道检验本该发现、为什么没发现；停在检验员漏检就判不成立。');
+    if(l.answer!==answer)return;
+    l.jd=j;box=document.getElementById('jd-layer-'+id);if(box)box.innerHTML=jdHtml(j);
+    addRecord('D4',j.target,j.verdict,j.reason,'DeepSeek（模型）');
+  }catch(e){addRecord('D4',local.target,local.verdict,local.reason);toast('DeepSeek 未返回，保留本地判断。');}
+}
+function judgeChain(type){
+  const c=state.d4[type];
+  if(!c.layers.length){toast('这条链还是空的。');return;}
+  c.layers.forEach(l=>{l.jd=d4LayerEval(type,l);});
+  const js=c.layers.map(l=>l.jd);
+  const verdict=js.some(j=>j.verdict==='不成立')?'不成立':js.some(j=>j.verdict==='部分成立')?'部分成立':'成立';
+  const other=state.d4[type==='a'?'b':'a'];
+  const note=!other.layers.length?(type==='a'?'B 链还是空的：你只答了为什么做错，没答为什么没拦住。':'A 链还是空的：缺发生原因，措施只能治症状。'):'';
+  const j=J(verdict,
+    (verdict==='成立'?'这条链每一层都有回答、依据和证据。':'这条链还有层不成立或没到底。')+(note?' '+note:''),
+    type==='a'?'这条链的终止层，换一个新人、赶货、插单，同样的错还会不会发生？':'哪道检验本该发现？是没规定检、检不到、抽样没覆盖，还是检出能力不足？',
+    verdict==='成立'?'可以保留；把两条链的终止层对应到 D5。':'先把不成立的层改掉，再谈措施；别用培训把链补上。',
+    null);
+  j.target='D4 · '+type.toUpperCase()+' 链';
+  c.jd=j;addRecord('D4',j.target,j.verdict,j.reason);
+  renderStage();
+}
+function demoJudge(type){
+  const l={id:'demo',answer:type==='a'?'操作工疏忽，忘了排普铣':'检验员漏检',basis:'',evidence:[],jd:null,source:'manual'};
+  const j=d4LayerEval(type,l);j.target='示例句 · '+(type==='a'?'A 链':'B 链');
+  document.getElementById('demoJd').innerHTML=jdHtml(j);
+}
+
+/* ============ D5 ============ */
+function d5row(id){return state.d5.rows.find(r=>r.id===id);}
+function terminalRoots(){
+  const out=[];
+  [['a','A'],['b','B']].forEach(([k,label])=>{
+    const c=state.d4[k];const l=c.layers[c.layers.length-1];
+    if(l)out.push({id:l.id,chain:label,text:l.answer,index:c.layers.length});
+  });
+  return out;
+}
+function rootCovered(id){return state.d5.rows.some(r=>r.target===id);}
+function d5Html(){
+  const roots=terminalRoots();
+  const coverage=roots.length?roots.map(r=>{
+    const ok=rootCovered(r.id);
+    return '<div class="root-chip '+(ok?'ok':'miss')+'"><b>'+r.chain+' 链</b><span>'+(ok?'已覆盖':'没有措施')+'</span><em>'+esc(clip(r.text,34))+'</em></div>';
+  }).join(''):'<div class="inline-warn">D4 还没有根因；D5 不能凭空写措施，先回 D4 把两条链写完。</div>';
+  return stageHead(5,'长期措施','每条措施针对一条根因；动条件，不动人的注意力。','AI 可以给候选，但不填人名；责任人、日期、执行情况由人选。')+
+    '<div class="card stage-lead"><div class="lead-row"><div><h2>根因覆盖</h2><p>每条终止根因至少有一条措施；没有措施对应的根因，D8 会指出来。</p></div></div><div class="coverage">'+coverage+'</div></div>'+
+    '<div class="card"><div class="card-head"><div><h2>永久措施</h2><p>判三件事：动没动根因、有没有漏根因、已完成有没有证据。</p></div><button class="btn btn-ghost btn-sm" onclick="addD5()">+ 新增措施</button></div>'+
+    state.d5.rows.map((r,i)=>d5RowHtml(r,i,roots)).join('')+
+    '<div class="hint" style="margin-top:8px">换新人、赶货、插单，同样的错还会不会发生？会，就是没到位。</div></div>';
+}
+function d5RowHtml(r,i,roots){
+  const rootOpts='<option value="">选择根因</option>'+roots.map(x=>'<option value="'+x.id+'"'+(r.target===x.id?' selected':'')+'>'+x.chain+' 链第 '+x.index+' 层 · '+esc(clip(x.text,25))+'</option>').join('');
+  return '<div class="row-card src-host" id="row-'+r.id+'">'+
+    '<div class="row-head"><span class="row-no">措施 '+pad(i+1)+'</span><div class="row-head-right">'+srcBadge(r.source)+'<button class="icon-btn" onclick="removeD5(\''+r.id+'\')">移除</button></div></div>'+
+    '<textarea placeholder="措施内容：改变条件，不要只写培训/宣贯" oninput="onD5Text(\''+r.id+'\',this)">'+esc(r.text)+'</textarea>'+
+    '<div class="grid4" style="margin-top:8px">'+
+      '<label class="mini-field"><span>针对哪条根因 *</span><select onchange="onD5Field(\''+r.id+'\',\'target\',this)" '+(roots.length?'':'disabled')+'>'+rootOpts+'</select></label>'+
+      personInput('提出人',r.proposer,'onD5Field(\''+r.id+'\',\'proposer\',this)')+
+      personInput('责任人',r.owner,'onD5Field(\''+r.id+'\',\'owner\',this)')+
+      '<label class="mini-field"><span>计划完成日期 *</span><input type="date" value="'+esc(r.due)+'" onchange="onD5Field(\''+r.id+'\',\'due\',this)"></label>'+
+    '</div>'+
+    '<div class="grid2" style="margin-top:8px">'+
+      '<label class="mini-field"><span>执行情况</span><select onchange="onD5Field(\''+r.id+'\',\'status\',this)">'+['待完成','已完成'].map(s=>'<option'+(r.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+      '<div></div>'+
+    '</div>'+
+    evBlock('d5.rows.'+i+'.evidence','ev-d5-'+r.id,r.evidence,'证据上传')+
+    '<div class="actions"><button class="btn btn-gen btn-sm" onclick="genD5(\''+r.id+'\')">生成</button><button class="btn btn-judge btn-sm" onclick="judgeD5(\''+r.id+'\')">判断</button></div>'+
+    '<div id="gen-d5-'+r.id+'">'+(state.d5.gen[r.id]?candHtml(state.d5.gen[r.id],'adoptD5',r.id):'')+'</div>'+
+    '<div id="jd-d5-'+r.id+'">'+(r.jd?jdHtml(r.jd):'')+'</div>'+
+  '</div>';
+}
+function onD5Text(id,el){
+  const r=d5row(id);if(!r)return;r.text=el.value;
+  if(r.source==='ai')r.source='edited';refreshBadge(el,r.source);
+  r.jd=null;const c=document.getElementById('jd-d5-'+id);if(c)c.innerHTML='';
+  staleD6();markDirty();updateStats();
+}
+function onD5Field(id,field,el){
+  const r=d5row(id);if(!r)return;r[field]=el.value;
+  r.jd=null;const c=document.getElementById('jd-d5-'+id);if(c)c.innerHTML='';
+  staleD6();markDirty();updateStats();
+}
+function addD5(){state.d5.rows.push({id:uid('m'),text:'',target:'',proposer:'',owner:'',due:'',status:'待完成',evidence:[],source:'manual',jd:null});staleD6();markDirty();renderStage();}
+function removeD5(id){if(!confirm('移除这条长期措施？'))return;state.d5.rows=state.d5.rows.filter(r=>r.id!==id);staleD6();markDirty();renderStage();}
+function d5Eval(r){
+  const t=(r.text||'').trim();
+  if(!t)return J('不成立','这条措施还是空的。','D5 要动哪个根因？先写措施内容。','补措施，再选针对哪条根因。');
+  const training=/(培训|宣贯|教育|提醒|意识|考核)/.test(t);
+  const condition=/(防错|工装|传感器|互锁|强制|清单|限位|报警|锁定|目视|检验项|标准|频次|量具|治具|夹具|程序|参数|图纸)/.test(t);
+  if(training&&!condition)return J('不成立',quote(t)+'只有培训/宣贯/提醒。这条做完，明天换个人、当天赶货、插单，同样的错还会发生。','做完这条，换新人、赶货、插单，同样的错还会不会发生？会的话，条件改变了什么？','让漏做就做不下去，或让下道必然发现：强制核对、防错工装、检验项前移。');
+  if(r.status==='已完成'&&(!r.evidence||!r.evidence.length))return J('不成立',quote(t)+'选了“已完成”，但没有证据。','完成了什么？证据在哪里？','把改版文件、实施记录或验证记录挂上；已完成必须有证据。');
+  if(!r.target)return J('部分成立',quote(t)+'没有挂到任何一条根因上。','这条措施针对 A 链还是 B 链的哪一层？','在“针对哪条根因”里选一条；挂不上根因的措施，D8 会当成漏覆盖。');
+  if(!r.owner)return J('部分成立',quote(t)+'没有指定责任人。','这条措施谁去做？','选责任人；AI 不替你分配责任。');
+  if(!r.due)return J('部分成立',quote(t)+'没有计划完成日期。','什么时候完成？','补日期，D6 验证才有时间基准。');
+  return J('成立',quote(t)+'改变了发生条件，挂到了根因，责任人/日期都有。','换新人、赶货、插单，同样的错还会不会发生？','可以进入 D6；把措施证据挂到本项。');
+}
+async function genD5(id){
+  const r=d5row(id);if(!r)return;
+  if(!r.target){toast('先在“针对哪条根因”里选一条，再生成。');return;}
+  const root=[...state.d4.a.layers,...state.d4.b.layers].find(l=>l.id===r.target);
+  const t=root?root.answer:'';
+  let cands;
+  if(/没有.*(提醒|防错)|漏排|启动|清单/.test(t)){
+    cands=[
+      {text:'换设备时强制核对工序清单，未核对不能启动设备',basis:'针对根因：换设备没有工序完整性确认（动条件）'},
+      {text:'工序清单与设备启动互锁，未确认清单设备无法启动',basis:'针对根因：设备可以直接启动（动条件，需改设备/程序）'},
+      {text:'下道工序对扁位 100% 目视并留记录',basis:'针对流出链：检验标准没有扁位项（动检验条件）'}
+    ];
+  }else if(/检验|标准|必检|量具|频次/.test(t)){
+    cands=[
+      {text:'把扁位列入检验标准必检项，规定量具、频次和抽样方式',basis:'针对根因：检验标准没有扁位项（动条件）'},
+      {text:'增加扁位检具/防错工装，漏加工件无法进入下道',basis:'针对根因：检出能力不足（动条件，需新增检具）'},
+      {text:'下道首件对扁位 100% 目视并留记录',basis:'针对流出链：增加检出点（动检验条件）'}
+    ];
+  }else{
+    cands=[
+      {text:'把措施写进作业文件，并增加防错/强制确认',basis:'按根因方向给条件型措施'},
+      {text:'增加下道检验点，明确检什么、用什么、频次',basis:'按流出链给检验型措施'},
+      {text:'用检具/工装让漏做无法通过',basis:'按根因给防错型措施'}
+    ];
+  }
+  state.d5.gen[id]=cands.slice(0,3);renderStage();
+  if(!AI.available)return;
+  try{
+    const ai=await aiCandidates('D5','长期措施',r.text,'必须针对选中根因；动条件，不要只写培训/宣贯/提高意识；不要填人名');
+    if(ai.length){state.d5.gen[id]=ai;renderStage();toast('DeepSeek 已生成 '+ai.length+' 条措施候选。');}
+  }catch(e){toast('DeepSeek 未返回，保留本地候选。');}
+}
+function adoptD5(id,i){
+  const c=(state.d5.gen[id]||[])[i],r=d5row(id);if(!c||!r)return;
+  r.text=c.text;r.source='ai';r.jd=null;delete state.d5.gen[id];staleD6();
+  renderStage();toast('已填入候选；责任人、日期没有自动填。');
+}
+async function judgeD5(id){
+  const r=d5row(id);if(!r)return;
+  const text=r.text,local=d5Eval(r);local.target='D5 · 措施 '+(state.d5.rows.indexOf(r)+1);
+  r.jd=local;
+  let box=document.getElementById('jd-d5-'+id);if(box)box.innerHTML=jdHtml(local);
+  if(!AI.available){addRecord('D5',local.target,local.verdict,local.reason);return;}
+  try{
+    const j=await aiJudge('D5',local.target,text,'长期措施必须挂到一条终端根因；动条件，不能只写培训/宣贯；已完成必须有证据');
+    if(r.text!==text)return;
+    r.jd=j;box=document.getElementById('jd-d5-'+id);if(box)box.innerHTML=jdHtml(j);
+    addRecord('D5',j.target,j.verdict,j.reason,'DeepSeek（模型）');
+  }catch(e){addRecord('D5',local.target,local.verdict,local.reason);toast('DeepSeek 未返回，保留本地判断。');}
+}
+
+/* ============ D6 ============ */
+function d6Html(){
+  const measureCount=state.d5.rows.filter(r=>String(r.text||'').trim()).length;
+  if(!state.d6.groups.length){
+    if(!measureCount){
+      return stageHead(6,'措施验证','先证明拦得住，再谈标准化。','D6 没有生成按钮，只有“分析需要验证什么”和“检查证据完整性”。')+
+        '<div class="card"><div class="empty" style="text-align:center;padding:26px"><p class="hint">D5 还没有措施，D6 无法列验证项。</p><button class="btn btn-ghost btn-sm" style="margin-top:9px" onclick="go(5)">回 D5</button></div></div>';
+    }
+    return stageHead(6,'措施验证','先证明拦得住，再谈标准化。','D6 没有生成按钮，只有“分析需要验证什么”和“检查证据完整性”。')+
+      '<div class="card"><div class="empty" style="text-align:center;padding:26px"><p class="hint">D5 已写 '+measureCount+' 条措施，但 D6 还没有列验证项。先点“分析需要验证什么”，系统会按每条措施列出要验什么、要准备什么。</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:11px"><button class="btn btn-gen btn-sm" onclick="analyzeD6()">分析需要验证什么</button><button class="btn btn-ghost btn-sm" onclick="go(5)">回 D5</button></div></div></div>';
+  }
+  return stageHead(6,'措施验证','三步：列验证项、按清单交证据、你填验证结论。','AI 只收证据、指缺口；“有效”两个字由你写。')+
+    '<div class="card stage-lead"><div class="lead-row"><div><h2>验证清单</h2><p>按 D5 的每条措施，列出要验什么、要准备什么、看什么算过。</p></div><div class="lead-actions"><button class="btn btn-gen" onclick="analyzeD6()">'+(state.d6.analyzed?'重新分析验证项':'分析需要验证什么')+'</button><button class="btn btn-judge" onclick="checkD6()">检查证据完整性</button></div></div>'+
+      (state.d6.analyzed?'<div class="hint" style="margin-top:8px">共 '+state.d6.groups.length+' 条措施 · '+state.d6.groups.reduce((n,g)=>n+g.items.length,0)+' 项验证内容。</div>':'')+
+    '</div>'+
+    (state.d6.stale?'<div class="inline-warn">D5 措施有改动，验证项可能已过期；请点“重新分析验证项”再判断。</div>':'')+
+    state.d6.groups.map((g,gi)=>d6GroupHtml(g,gi)).join('')+
+    '<div class="card"><div class="card-head"><div><h2>证据完整性</h2><p>点“检查证据完整性”，看缺什么、什么不对题。</p></div><button class="btn btn-judge btn-sm" onclick="checkD6()">检查</button></div>'+
+      (state.d6.check?d6SummaryHtml():'<div class="hint">还没检查。先按清单上传，再点检查。</div>')+'</div>'+
+    conclusionHtml();
+}
+function d6GroupHtml(g,gi){
+  const check=state.d6.check&&state.d6.check.groups?state.d6.check.groups[gi]:null;
+  return '<div class="card"><div class="group-head"><span class="group-no">措施 '+pad(gi+1)+'</span><div><h3>'+esc(g.measureText)+'</h3><div class="group-root">对应根因：'+esc(clip(g.rootText,48))+'</div></div></div>'+
+    g.items.map((it,ii)=>{
+      const st=check?check.items[ii]:null;
+      return '<div class="check-item"><div class="ci-no">'+(ii+1)+'</div><div class="ci-body"><div class="ci-head"><b>'+esc(it.label)+'</b>'+(st==='ok'?'<span class="tag ok">已交</span>':st==='missing'?'<span class="tag miss">缺</span>':st==='mismatch'?'<span class="tag human">不对题</span>':'')+'</div><p class="standard">判定标准：'+esc(it.standard)+'</p>'+evBlock('d6.groups.'+gi+'.items.'+ii+'.evidence','ev-d6-'+gi+'-'+ii,it.evidence,'证据')+'</div></div>';
+    }).join('')+'</div>';
+}
+function analyzeD6(){
+  const old={};
+  (state.d6.groups||[]).forEach(g=>g.items.forEach(it=>{old[it.id]=it.evidence;}));
+  const groups=buildD6GroupsFor(state.d5.rows,state.d4);
+  groups.forEach(g=>g.items.forEach(it=>{if(old[it.id])it.evidence=old[it.id];}));
+  state.d6.groups=groups;state.d6.analyzed=true;state.d6.check=null;state.d6.stale=false;
+  addRecord('D6','分析验证项','已列清单',groups.length+' 条措施 / '+groups.reduce((n,g)=>n+g.items.length,0)+' 项');
+  renderStage();toast('已按 D5 列出验证项；证据按原来的条目保留。');
+}
+function computeD6Check(groups){
+  if(!groups||!groups.length)return null;
+  let missing=0,mismatch=0,submitted=0,total=0;
+  const out=groups.map(g=>{
+    const items=g.items.map(it=>{
+      total++;
+      if(!it.evidence||!it.evidence.length){missing++;return 'missing';}
+      submitted++;
+      if(it.keywords&&it.keywords.length&&!it.evidence.some(e=>it.keywords.some(k=>e.name.includes(k)))){mismatch++;return 'mismatch';}
+      return 'ok';
+    });
+    return {measureText:g.measureText,items};
+  });
+  return {total,submitted,missing,mismatch,groups:out};
+}
+function checkD6(){
+  const c=computeD6Check(state.d6.groups);
+  if(!c){toast('先点“分析需要验证什么”。');return;}
+  state.d6.check=c;
+  addRecord('D6','证据完整性',c.missing||c.mismatch?'需补':'齐全',c.missing+' 项缺 / '+c.mismatch+' 项不对题');
+  renderStage();toast('检查完成：缺 '+c.missing+' 项，不对题 '+c.mismatch+' 项。');
+}
+function d6SummaryHtml(){
+  const c=state.d6.check;if(!c)return '';
+  return '<div class="check-summary '+(c.missing||c.mismatch?'part':'ok')+'"><div class="cs-head"><b>证据完整性：'+c.submitted+' / '+c.total+'</b><span>缺 '+c.missing+' 项 · 不对题 '+c.mismatch+' 项</span></div>'+
+    c.groups.map((g,gi)=>{
+      const miss=g.items.map((s,i)=>s==='ok'?null:state.d6.groups[gi].items[i].label).filter(Boolean);
+      return '<div class="cs-line">措施 '+(gi+1)+'：'+(miss.length?'缺/不对题 —— '+miss.join('；'):'齐全')+'</div>';
+    }).join('')+
+    (c.missing?'<div class="cs-line" style="margin-top:5px">照片只能证明你们规定了，不能证明它拦得住；要拿故意做坏的样件走一遍。</div>':'')+
+  '</div>';
+}
+function conclusionHtml(){
+  const c=state.d6.conclusion;
+  let gate='<div class="gate bad"><b>D7 未解锁</b><span>先在下面由人填“有效”或“待观察”。</span></div>';
+  if(c==='有效')gate='<div class="gate ok"><b>D7 已解锁</b><span>你填了“有效”；D8 仍会检查证据缺口。</span></div>';
+  if(c==='待观察')gate='<div class="gate part"><b>D7 已解锁</b><span>“待观察”可以进 D7，但 D8 必须写明观察多久、什么条件算通过。</span></div>';
+  if(c==='无效')gate='<div class="gate bad"><b>D7 未解锁</b><span>验证无效，必须回 D5 改措施；这是全报告唯一一处先证明有效才能往下走。</span></div>';
+  const gap=c==='有效'&&state.d6.check&&(state.d6.check.missing||state.d6.check.mismatch)
+    ?'<div class="inline-warn">你填了“有效”，但证据还有 '+state.d6.check.missing+' 项缺、'+state.d6.check.mismatch+' 项不对题；D8 会把它列为需补项。</div>':'';
+  return '<div class="card conclusion"><div class="card-head"><div><h2>人工验证结论</h2><p>这一栏 AI 不代填。它只负责把证据收齐、把缺口指出来；“有效”这两个字由你写。</p></div><span class="tag human">人工</span></div>'+
+    '<div class="grid2">'+personInput('验证人',state.d6.verifier,'onD6Verifier(this)')+
+    '<label class="mini-field"><span>验证结论 *</span><select onchange="setConclusion(this.value)"><option value="">请选择（必须由人填）</option>'+['有效','无效','待观察'].map(s=>'<option'+(c===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label></div>'+
+    gap+gate+'</div>';
+}
+function onD6Verifier(el){state.d6.verifier=el.value;refreshPersonTag(el);updateStats();}
+function setConclusion(v){
+  state.d6.conclusion=v;
+  if(v)addRecord('D6','人工验证结论',v,'',state.d6.verifier||'人工（未填验证人）');
+  renderStage();
+  if(v==='无效')toast('验证无效：D7 已锁，必须回 D5 改措施。');
+}
+function d7Gate(){return state.d6.conclusion==='有效'||state.d6.conclusion==='待观察';}
+
+/* ============ D7 ============ */
+function d7Html(){
+  if(!d7Gate()){
+    return stageHead(7,'标准化','把有效做法固化进体系。','D6 没有验证通过之前，D7 不能做。')+
+      '<div class="card lock-card"><div class="lock-mark">!</div><h3>D7 暂不可进入</h3><p>D6 的验证结论现在是“'+(state.d6.conclusion||'未填')+'”。按 PRD，验证无效不得进 D7；未填也不行。先由人填“有效”或“待观察”。</p><button class="btn btn-judge" onclick="go(6)">回 D6 填验证结论</button></div>';
+  }
+  return stageHead(7,'标准化','它和 D6 同构：先问要准备什么，再交资料，最后查还缺什么。','文件改了没走变更流程，等于没生效；执行者不知道，等于没改。')+
+    '<div class="card stage-lead"><div class="lead-row"><div><h2>该改哪些文件</h2><p>按 D4 的根因类型和 D5 的措施，列文件、改什么、还要准备什么。</p></div><div class="lead-actions"><button class="btn btn-gen" onclick="analyzeD7()">'+(state.d7.analyzed?'重新分析标准化资料':'分析需要准备哪些标准化资料')+'</button><button class="btn btn-judge" onclick="checkD7()">检查还缺什么</button></div></div>'+
+      (state.d6.conclusion==='待观察'?'<div class="inline-warn">D6 是“待观察”：D8 必须写明哪条措施还在观察、观察多久、什么条件算通过。</div>':'')+'</div>'+
+    (state.d7.stale?'<div class="inline-warn">D4 根因有改动，标准化资料可能已过期；请点“重新分析标准化资料”。</div>':'')+
+    (state.d7.analyzed?d7ItemsHtml():'<div class="card"><div class="hint">还没分析。点上面的按钮，按根因类型列资料。</div></div>')+
+    d7MetaHtml()+
+    '<div class="card"><div class="card-head"><div><h2>标准化资料检查</h2><p>查六个维度：文件类型、改版实物、变更流程、横向展开、文件一致、执行者培训。</p></div><button class="btn btn-judge btn-sm" onclick="checkD7()">检查还缺什么</button></div><div id="d7Check">'+(state.d7.check?d7SummaryHtml():'<div class="hint">还没检查。</div>')+'</div></div>';
+}
+function d7ItemsHtml(){
+  return '<div class="d7-list">'+state.d7.items.map((it,i)=>'<div class="d7-item"><div class="di-head"><span class="cat">'+esc(it.cat)+'</span><b>'+esc(it.label)+'</b><span class="tag ai">AI 生成</span></div><p>'+esc(it.desc)+'</p><div class="grid2">'+personInput('提出人',it.proposer,'onD7Item(\''+it.id+'\',\'proposer\',this)')+personInput('责任人',it.owner,'onD7Item(\''+it.id+'\',\'owner\',this)')+'</div>'+evBlock('d7.items.'+i+'.evidence','ev-d7-'+it.id,it.evidence,'改版后的实物')+'</div>').join('')+'</div>';
+}
+function d7MetaHtml(){
+  const m=state.d7.meta;
+  return '<div class="card"><div class="card-head"><div><h2>变更与一致性核对</h2><p>文件之间、文件与执行之间，要能对得上。</p></div></div><div class="grid3">'+
+    '<label class="mini-field"><span>变更单号 *</span><input value="'+esc(m.changeNo)+'" placeholder="没有变更单号，等于文件没生效" oninput="onD7Meta(\'changeNo\',this)"></label>'+
+    '<label class="mini-field"><span>生效日期 *</span><input type="date" value="'+esc(m.effective)+'" onchange="onD7Meta(\'effective\',this)"></label>'+
+    '<label class="mini-field"><span>横向展开</span><select onchange="onD7Meta(\'horizontal\',this)">'+['未做','已做','不涉及'].map(s=>'<option'+(m.horizontal===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+    '<label class="mini-field"><span>客户批准</span><select onchange="onD7Meta(\'customer\',this)">'+['不需要','需要'].map(s=>'<option'+(m.customer===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+    '<label class="mini-field"><span>控制计划频次</span><select onchange="onD7Meta(\'controlFreq\',this)">'+['每次换设备','每班','每批'].map(s=>'<option'+(m.controlFreq===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+    '<label class="mini-field"><span>工艺卡动作</span><select onchange="onD7Meta(\'processAction\',this)">'+['核对工序清单','班前会宣贯','自检'].map(s=>'<option'+(m.processAction===s?' selected':'')+'>'+s+'</option>').join('')+'</select></label>'+
+  '</div></div>';
+}
+function onD7Item(id,field,el){
+  const it=state.d7.items.find(x=>x.id===id);if(!it)return;
+  it[field]=el.value;refreshPersonTag(el);updateStats();
+}
+function onD7Meta(field,el){
+  state.d7.meta[field]=el.value;
+  state.d7.check=null;
+  const box=document.getElementById('d7Check');if(box)box.innerHTML='<div class="inline-warn">资料或核对项已改动，请重新检查。</div>';
+  markDirty();
+}
+function analyzeD7(){
+  const a=state.d4.a.layers[state.d4.a.layers.length-1];
+  const b=state.d4.b.layers[state.d4.b.layers.length-1];
+  const old={};state.d7.items.forEach(it=>{old[it.id]={evidence:it.evidence,proposer:it.proposer,owner:it.owner};});
+  const items=buildD7ItemsFor(a?a.answer:'',b?b.answer:'');
+  items.forEach(it=>{if(old[it.id])Object.assign(it,old[it.id]);});
+  state.d7.items=items;state.d7.analyzed=true;state.d7.check=null;state.d7.stale=false;
+  addRecord('D7','分析标准化资料','已列清单',items.length+' 项');
+  renderStage();toast('已按根因类型列出 '+items.length+' 项资料。');
+}
+function computeD7Check(items,meta){
+  const issues=[];
+  const docs=items.filter(it=>!['change','train'].includes(it.id));
+  docs.forEach(it=>{if(!it.evidence||!it.evidence.length)issues.push({sev:3,title:'D7 缺 '+it.cat,detail:'“'+it.label+'”没有交改版后的实物；没有实物，就只能算计划，不算标准化。'});});
+  const change=items.find(it=>it.id==='change');
+  if(!meta.changeNo||!meta.effective||!change||!change.evidence.length){
+    issues.push({sev:3,title:'D7 文件改了没走变更流程',detail:'变更单号、生效日期、变更单附件至少要齐；没有变更流程，文件改了也不生效。'});
+  }
+  const train=items.find(it=>it.id==='train');
+  if(train&&(!train.evidence||!train.evidence.length))issues.push({sev:2,title:'D7 操作者培训记录缺失',detail:'文件改了，操作者不知道，等于没改；要交培训签到或确认记录。'});
+  if(meta.horizontal!=='已做')issues.push({sev:2,title:'D7 横向展开没做',detail:'6 种支柱走同一道普铣，只改一个图号不算完；同类零件、同类工序要一起评估。'});
+  if(meta.controlFreq!=='每次换设备'&&meta.processAction==='核对工序清单')issues.push({sev:2,title:'D7 控制计划与工艺卡对不上',detail:'控制计划写的频次是“'+meta.controlFreq+'”，工艺卡写的是“核对工序清单”；两者不是一个意思，要么改频次，要么改工艺卡动作。'});
+  if(meta.customer==='需要'){
+    const hasApproval=items.some(it=>(it.evidence||[]).some(e=>/(客户|批准)/.test(e.name)));
+    if(!hasApproval)issues.push({sev:2,title:'D7 客户批准缺失',detail:'涉及客户指定文件/关键特性，变更要客户确认；把客户批准记录一并挂到变更单附件。'});
+  }
+  items.forEach(it=>{
+    if(it.evidence&&it.evidence.some(e=>/(计划|纪要|方案)/.test(e.name)&&!/(改版|修订|生效)/.test(e.name))){
+      issues.push({sev:2,title:'D7 传的不是改版后的实物',detail:'“'+it.evidence[0].name+'”看起来是计划/纪要，不是改完的文件。'});
+    }
+  });
+  const submitted=items.filter(it=>it.evidence&&it.evidence.length).length;
+  return {issues,total:items.length,submitted,missing:items.length-submitted};
+}
+function checkD7(){
+  const c=computeD7Check(state.d7.items,state.d7.meta);
+  state.d7.check=c;
+  addRecord('D7','标准化资料检查',c.issues.length?'需补':'通过',c.issues.length+' 项问题');
+  renderStage();toast(c.issues.length?'检查完成：'+c.issues.length+' 项问题。':'六项检查通过。');
+}
+function d7SummaryHtml(){
+  const c=state.d7.check;if(!c)return '';
+  return '<div class="check-summary '+(c.issues.length?'part':'ok')+'"><div class="cs-head"><b>资料：'+c.submitted+' / '+c.total+'</b><span>'+(c.issues.length?c.issues.length+' 项问题':'未发现问题')+'</span></div>'+
+    (c.issues.length?c.issues.map(i=>'<div class="issue-line"><span class="sev sev-'+i.sev+'">'+(i.sev===3?'阻断':'需补')+'</span><div><b>'+esc(i.title)+'</b><br>'+esc(i.detail)+'</div></div>').join(''):'<div class="cs-line">文件类型、变更流程、横向展开、文件一致性、培训都过了；仍由人确认生效。</div>')+'</div>';
+}
+
+/* ============ D8 ============ */
+function d8Html(){
+  const stale=state.d8.report&&state.d8.stale?'<div class="stale">报告在上次判断后有改动，建议重新判断整份报告。</div>':'';
+  return stageHead(8,'关闭','关闭前，整份报告一次判完；最多列 8 条，按严重度排。','AI 不签批；它只列缺什么，关闭确认人和日期由人填。')+
+    '<div class="card stage-lead"><div class="lead-row"><div><h2>整份报告判断</h2><p>一次列全，不挤牙膏；超过 8 条折叠。每条都指到具体阶段。</p></div><div class="lead-actions"><button class="btn btn-ghost btn-lg" onclick="exportFullReport()">导出完整报告</button><button class="btn btn-ghost btn-lg" onclick="exportReportPdf()">打印判断结论</button><button class="btn btn-judge btn-lg" onclick="judgeReport()">判断整份报告</button></div></div>'+stale+'</div>'+
+    '<div class="grid2">'+
+      d8TextBlock('contribution','团队贡献','写清谁做了什么，不要写“认真配合”')+
+      d8TextBlock('lessons','经验教训','写这次以后能复用的判断，不要写“加强培训”')+
+    '</div>'+
+    '<div class="card"><div class="card-head"><div><h2>待观察说明</h2><p>D6 选“待观察”时必填：哪条措施、观察多久、什么条件算通过。</p></div></div><textarea placeholder="例如：下道目视措施观察 30 天；连续 500 件无漏检，且故意做坏件能被拦下，算通过。" oninput="onD8Observation(this)">'+esc(state.d8.observation.text)+'</textarea></div>'+
+    '<div class="card"><div class="card-head"><div><h2>关闭信息</h2><p>人名、日期由人填；AI 不分配责任。</p></div></div><div class="grid2">'+personInput('关闭确认人',state.d8.closer,'onD8Closer(this)')+'<label class="mini-field"><span>关闭日期</span><input type="date" value="'+esc(state.d8.date)+'" onchange="onD8Date(this)"></label></div><label class="mini-field" style="margin-top:10px"><span>历史同类问题（系统带入，可改）</span><textarea oninput="onD8History(this)" style="min-height:56px">'+esc(state.d8.history)+'</textarea></label></div>'+
+    '<div class="card"><div class="card-head"><div><h2>整份报告结论</h2><p>最多 8 条，按严重度排序；其余折叠。</p></div></div>'+(state.d8.report?reportHtml():'<div class="hint">还没判断。点上面的“判断整份报告”。</div>')+'</div>';
+}
+function d8TextBlock(key,label,hint){
+  const o=state.d8[key];
+  return '<div class="card textblock src-host"><div class="field-head"><div><div class="field-label">'+label+'</div><div class="field-hint">'+hint+'</div></div>'+srcBadge(o.source)+'</div><textarea placeholder="'+hint+'" oninput="onD8Text(\''+key+'\',this)">'+esc(o.text)+'</textarea><div class="grid2" style="margin-top:7px">'+personInput('提出人',o.proposer,'onD8Field(\''+key+'\',\'proposer\',this)')+'</div><div class="actions"><button class="btn btn-gen btn-sm" onclick="genD8(\''+key+'\')">生成</button><button class="btn btn-judge btn-sm" onclick="judgeD8Text(\''+key+'\')">判断</button></div><div id="gen-d8-'+key+'">'+(state.d8.gen[key]?candHtml(state.d8.gen[key],'adoptD8',key):'')+'</div><div id="jd-d8-'+key+'">'+(o.jd?jdHtml(o.jd):'')+'</div></div>';
+}
+function onD8Text(key,el){
+  const o=state.d8[key];o.text=el.value;
+  if(o.source==='ai')o.source='edited';refreshBadge(el,o.source);
+  o.jd=null;const c=document.getElementById('jd-d8-'+key);if(c)c.innerHTML='';
+  markDirty();updateStats();
+}
+function onD8Field(key,field,el){state.d8[key][field]=el.value;refreshPersonTag(el);updateStats();}
+function onD8Observation(el){state.d8.observation.text=el.value;markDirty();}
+function onD8Closer(el){state.d8.closer=el.value;refreshPersonTag(el);markDirty();updateStats();}
+function onD8Date(el){state.d8.date=el.value;markDirty();}
+function onD8History(el){state.d8.history=el.value;markDirty();}
+function d8Eval(key){
+  const o=state.d8[key],t=(o.text||'').trim();
+  if(key==='contribution'){
+    if(!t)return J('不成立','团队贡献还是空的。','这次 8D 里，质量、生产、工程分别做了什么？','写具体动作：谁提供了哪份记录、谁完成了哪项验证。');
+    if(/认真|努力|配合|辛苦|积极/.test(t)&&t.length<40)return J('部分成立',quote(t)+'太笼统，看不出谁做了什么。','具体是谁、在哪一步做了什么？','换成可核对的动作和产出。');
+    return J('成立',quote(t)+'写出了具体参与和动作。','这些贡献有没有对应的会议/记录可查？','可以保留；把关键记录挂到对应阶段。');
+  }
+  if(!t)return J('不成立','经验教训还是空的。','这次最该复用的一条判断是什么？','写“下次遇到什么情况，先看哪里”，不要写“加强培训”。');
+  if(/加强培训|提高意识|加强管理|认真执行/.test(t)&&!/条件|标准|防错|清单|频次|检验项/.test(t))return J('不成立',quote(t)+'又回到了培训/意识，不是可复用的判断。','如果下次换了人、赶货、插单，这条经验能提醒你查什么？','写成一条条件判断：例如“换设备时先查工序清单有没有被绕过”。');
+  return J('成立',quote(t)+'是一条能复用的判断。','下次同类问题，第一步先查什么？','可以保留；把这条放进 D8 的经验教训。');
+}
+async function genD8(key){
+  const cands=key==='contribution'?[
+    {text:'质量、生产、工程三方在 8 小时内完成围堵：120 件复检、200 件客户拦截；根因从“操作工疏忽”下钻到换设备缺工序核对条件。',basis:'按 D3/D4 的实际动作汇总'},
+    {text:'本次 8D 由质量牵头、生产提供换班与设备记录、工程确认换设备规定，完成厂内复检与客户端拦截。',basis:'按 D1 小组分工汇总'},
+    {text:'小组完成了 120 件复检和 200 件拦截，并把根因分析从人的注意力推到换设备无工序完整性确认。',basis:'按 D3/D5 汇总'}
+  ]:[
+    {text:'根因停在人身上，措施就只剩培训；换设备缺工序核对条件，才是这次漏加工能发生的条件。',basis:'对照 D4 的 A 链'},
+    {text:'只答发生原因不够，B 链必须说清哪道检验本该发现、为什么没发现；这次是检验标准根本没列扁位。',basis:'对照 D4 的 B 链'},
+    {text:'验证不是看照片，是拿故意做坏的样件走一遍下道，看能不能拦住。',basis:'对照 D5/D6 的验证要求'}
+  ];
+  state.d8.gen[key]=cands.slice(0,3);renderStage();
+  if(!AI.available)return;
+  try{
+    const ai=await aiCandidates('D8',key==='contribution'?'团队贡献':'经验教训',state.d8[key].text,'根据全报告起草，不要写空话，不要生成人名');
+    if(ai.length){state.d8.gen[key]=ai;renderStage();toast('DeepSeek 已生成 '+ai.length+' 条候选。');}
+  }catch(e){toast('DeepSeek 未返回，保留本地候选。');}
+}
+function adoptD8(key,i){
+  const c=(state.d8.gen[key]||[])[i];if(!c)return;
+  const o=state.d8[key];o.text=c.text;o.source='ai';o.jd=null;state.d8.gen[key]=null;
+  renderStage();toast('已填入候选；提出人没有被自动填。');
+}
+async function judgeD8Text(key){
+  const o=state.d8[key];if(!o)return;
+  const text=o.text,local=d8Eval(key);local.target='D8 · '+(key==='contribution'?'团队贡献':'经验教训');
+  o.jd=local;
+  let box=document.getElementById('jd-d8-'+key);if(box)box.innerHTML=jdHtml(local);
+  if(!AI.available){addRecord('D8',local.target,local.verdict,local.reason);return;}
+  try{
+    const j=await aiJudge('D8',local.target,text,key==='contribution'?'团队贡献要写具体动作和产出，不要空话':'经验教训要写成下次可复用的条件判断，不要写加强培训');
+    if(o.text!==text)return;
+    o.jd=j;box=document.getElementById('jd-d8-'+key);if(box)box.innerHTML=jdHtml(j);
+    addRecord('D8',j.target,j.verdict,j.reason,'DeepSeek（模型）');
+  }catch(e){addRecord('D8',local.target,local.verdict,local.reason);toast('DeepSeek 未返回，保留本地判断。');}
+}
+
+/* ============ 整份报告 ============ */
+function computeReport(){
+  const issues=[];
+  const add=(sev,stage,title,detail)=>issues.push({sev,stage,title,detail});
+  const d2what=state.d2.fields.what.text||'';
+  const d2why=state.d2.fields.why.text||'';
+  const hm=d2Eval('howmany');
+  if(!d2what.trim()&&!d2why.trim())add(3,2,'D2 问题描述为空','D2 没写清楚，后面的根因、措施、验证都没有基准。');
+  else if(hm.verdict==='不成立')add(3,2,'D2 数量没有量化',hm.reason+' '+hm.advice);
+
+  const d1=d1Eval(state.d1.members);
+  if(d1.verdict!=='成立')add(2,1,'D1 小组还不成立',d1.reason);
+
+  if(!state.d3.rows.length)add(3,3,'D3 没有临时遏制措施','问题还在流出，D3 不能空。');
+  state.d3.rows.forEach((r,i)=>{
+    const j=d3Eval(r);
+    if(j.verdict==='成立')return;
+    if(r.status==='已完成'&&(!r.evidence||!r.evidence.length))add(3,3,'D3 第 '+(i+1)+' 条“已完成”但没有证据',quote(r.text,26)+j.reason);
+    else if(/工装|图纸|工艺|程序|FMEA|控制计划/.test(r.text)||((d3Hours(r)||0)>72))add(2,3,'D3 里混进了永久措施',quote(r.text,26)+'不是 72 小时内的临时围堵；该放 D5。');
+    else if(j.verdict==='不成立')add(2,3,'D3 第 '+(i+1)+' 条不成立',j.reason);
+  });
+  if(/客户|流出/.test(d2why)&&!state.d3.rows.some(r=>/(客户|拦截|召回|通知|签收)/.test(r.text||'')))add(3,3,'D3 没有客户端措施','D2 写了已流出客户，但 D3 只有厂内动作；货在外面，围堵没闭环。');
+
+  ['a','b'].forEach(type=>{
+    const c=state.d4[type];
+    if(!c.layers.length){add(3,4,'D4 '+(type==='a'?'A':'B')+' 链缺失',type==='a'?'缺发生原因，措施只能治症状。':'缺流出原因，下次照样流出去。');return;}
+    c.layers.forEach((l,i)=>{
+      const j=d4LayerEval(type,l);
+      if(j.verdict==='不成立')add(3,4,'D4 '+(type==='a'?'A':'B')+' 链第 '+(i+1)+' 层不成立',j.reason);
+      else if(j.verdict==='部分成立')add(2,4,'D4 '+(type==='a'?'A':'B')+' 链第 '+(i+1)+' 层需补',j.reason);
+    });
+  });
+  if(!state.d4.methodPicked)add(1,4,'D4 还没推荐分析方法','5Why 以外的工具没有按 D2 的数据做推荐；不影响根因链，但建议补上。');
+
+  if(!state.d5.rows.length)add(3,5,'D5 没有长期措施','根因没有被措施覆盖，报告关了也会复发。');
+  terminalRoots().forEach(root=>{
+    if(!rootCovered(root.id))add(3,5,'D5 漏掉一条根因','根因“'+clip(root.text,30)+'”（'+root.chain+' 链）没有任何措施对应。');
+  });
+  state.d5.rows.forEach((r,i)=>{
+    const j=d5Eval(r);
+    if(r.status==='已完成'&&(!r.evidence||!r.evidence.length))add(3,5,'D5 第 '+(i+1)+' 条“已完成”但没有证据','没有证据的完成，不能算措施落地；把改版文件、实施记录或验证记录挂上。');
+    else if(j.verdict==='不成立')add(2,5,'D5 第 '+(i+1)+' 条不成立',j.reason);
+    else if(j.verdict==='部分成立'&&!r.target)add(2,5,'D5 第 '+(i+1)+' 条没挂根因',j.reason);
+  });
+
+  const c6=computeD6Check(state.d6.groups);
+  if(!c6)add(2,6,'D6 还没列验证项','没有验证清单，D7 没有进入依据。');
+  if(!state.d6.conclusion)add(3,6,'D6 验证结论没填','这一栏必须由人填；AI 不代填。');
+  else if(state.d6.conclusion==='无效')add(3,6,'D6 验证结论是无效','验证无效不得进 D7，必须回 D5 改措施。');
+  else if(state.d6.conclusion==='待观察'&&!state.d8.observation.text.trim())add(2,6,'D6 待观察，但 D8 没写观察条件','要写明哪条措施、观察多久、什么条件算通过。');
+  if(c6&&(c6.missing||c6.mismatch))add(2,6,'D6 证据不齐','缺 '+c6.missing+' 项，'+c6.mismatch+' 项不对题；照片只能证明规定了，不能证明拦得住。');
+  if(state.d6.stale)add(2,6,'D6 验证清单已过期','D5 措施改动后，验证项没有重新分析，清单可能对不上现在的措施。');
+
+  if(d7Gate()){
+    if(!state.d7.analyzed)add(2,7,'D7 标准化还没分析','有效做法还没固化进文件。');
+    else{
+      if(state.d7.stale)add(2,7,'D7 标准化清单已过期','D4 根因改动后，标准化资料没有重新分析，可能漏文件。');
+      const c7=computeD7Check(state.d7.items,state.d7.meta);
+      c7.issues.forEach(x=>add(x.sev,7,x.title,x.detail));
+    }
+  }
+
+  if(/相同|没有实质升级|无实质升级/.test(state.d8.history||''))add(2,8,'历史同类 8D 没有实质升级','2026-08 已发生过同失效模式，措施和这次相同；没有实质升级，下次还会再来。');
+  if(!state.d8.contribution.text.trim())add(1,8,'D8 团队贡献未填','关闭前要写清谁做了什么。');
+  if(!state.d8.lessons.text.trim())add(1,8,'D8 经验教训未填','经验教训要能复用，不然这份 8D 只解决了这一次。');
+  if(!state.d8.closer.trim()||!state.d8.date)add(1,8,'关闭确认人或日期未填','关闭仍要由人签。');
+
+  const seen=new Set();
+  const uniq=issues.filter(i=>{if(seen.has(i.title))return false;seen.add(i.title);return true;});
+  uniq.sort((a,b)=>b.sev-a.sev||a.stage-b.stage);
+  return uniq;
+}
+function judgeReport(){
+  const issues=computeReport();
+  const blockers=issues.filter(i=>i.sev===3).length;
+  let label,cls,text;
+  if(blockers){label='现在不能关闭';cls='bad';text='有 '+blockers+' 条阻断项，先处理再关闭。判断只列问题，不替你签批。';}
+  else if(issues.length){label='有 '+issues.length+' 条需补';cls='part';text='没有阻断项，但还有需要补的内容；补齐后重新判断。';}
+  else{label='可以进入关闭复核';cls='ok';text='没有发现阻断项；关闭确认仍由人签。';}
+  state.d8.report={issues,label,cls,text,at:nowStamp()};
+  state.d8.stale=false;
+  addRecord('D8','整份报告',label,issues.length+' 条');
+  renderStage();
+  toast('整份报告判断完成：'+label+'。');
+}
+function fullReportEv(list){
+  return (list&&list.length)?list.map(f=>esc(f.name)).join('<br>'):'<span class="fr-miss">未上传</span>';
+}
+function fullReportJd(j){
+  if(!j)return '<span class="fr-miss">未判断</span>';
+  return '<b>'+esc(j.verdict)+'</b><br>'+esc(j.reason||'')+'<br><span class="fr-q">追问：'+esc(j.question||'')+'</span><br><span class="fr-q">建议：'+esc(j.advice||'')+'</span>';
+}
+function fullReportSection(code,title,body){
+  return '<section class="fr-section"><h2>D'+code+' · '+title+'</h2>'+body+'</section>';
+}
+function fullReportHtml(){
+  const m=state.meta||{};
+  let h='<div class="fr-head"><h1>'+esc(m.name||'未命名 8D')+'</h1><div class="fr-meta">'+esc(m.id||'')+' · 导出时间 '+esc(nowISO().slice(0,16).replace('T',' '))+' · 提出人 '+esc(state.d2.proposer||'—')+'</div></div>';
+
+  h+=fullReportSection(1,'小组','<table><thead><tr><th>姓名</th><th>部门</th><th>角色</th><th>组长</th><th>联系方式</th></tr></thead><tbody>'+
+    (state.d1.members.length?state.d1.members.map(x=>'<tr><td>'+esc(x.name||'—')+'</td><td>'+esc(x.dept||'—')+'</td><td>'+esc(x.role||'—')+'</td><td>'+(x.leader?'是':'否')+'</td><td>'+esc(x.contact||'—')+'</td></tr>').join(''):'<tr><td colspan="5" class="fr-miss">未填写</td></tr>')+'</tbody></table>');
+
+  h+=fullReportSection(2,'问题描述','<table><thead><tr><th>维度</th><th>内容</th><th>提出人</th><th>附件</th><th>判断</th></tr></thead><tbody>'+
+    D2_FIELDS.map(f=>{const st=state.d2.fields[f.key]||{};return '<tr><td>'+esc(f.label)+'</td><td>'+esc(st.text||'—')+'</td><td>'+esc(state.d2.proposer||'—')+'</td><td>'+fullReportEv(st.evidence)+'</td><td>'+fullReportJd(st.jd)+'</td></tr>';}).join('')+'</tbody></table>');
+
+  h+=fullReportSection(3,'临时遏制措施','<table><thead><tr><th>措施</th><th>提出人</th><th>责任人</th><th>时限</th><th>状态</th><th>证据</th><th>判断</th></tr></thead><tbody>'+
+    (state.d3.rows.length?state.d3.rows.map((r,i)=>'<tr><td>'+(i+1)+'. '+esc(r.text||'—')+'</td><td>'+esc(r.proposer||'—')+'</td><td>'+esc(r.owner||'—')+'</td><td>'+esc(r.due||'—')+'</td><td>'+esc(r.status||'—')+'</td><td>'+fullReportEv(r.evidence)+'</td><td>'+fullReportJd(r.jd)+'</td></tr>').join(''):'<tr><td colspan="7" class="fr-miss">未填写</td></tr>')+'</tbody></table>');
+
+  const toolNames=selectedTools().map(id=>{const t=TOOLS.find(x=>x.id===id);return t?t.name:id;});
+  const chains=['a','b'].map(type=>{
+    const c=state.d4[type];
+    return '<h3>'+type.toUpperCase()+' 链（发生/流出原因） · 提出人 '+esc(c.proposer||'—')+'</h3>'+
+      (c.layers.length?c.layers.map((l,i)=>'<div class="fr-layer"><b>第 '+(i+1)+' 层</b> '+esc(l.answer||'—')+'<div class="fr-small">依据：'+esc(l.basis||'—')+' · 证据：'+fullReportEv(l.evidence)+'</div>'+fullReportJd(l.jd)+'</div>').join(''):'<p class="fr-miss">未填写</p>');
+  }).join('');
+  h+=fullReportSection(4,'根本原因','<p>分析方法：'+(toolNames.length?esc(toolNames.join('、')):'<span class="fr-miss">未选择</span>')+'</p>'+
+    (state.d4.dirs&&state.d4.dirs.length?'<p class="fr-small">根因方向：'+state.d4.dirs.map(d=>esc(d.text)).join('；')+'</p>':'')+chains);
+
+  h+=fullReportSection(5,'长期措施','<table><thead><tr><th>措施</th><th>针对根因</th><th>提出人</th><th>责任人</th><th>计划完成</th><th>状态</th><th>证据</th><th>判断</th></tr></thead><tbody>'+
+    (state.d5.rows.length?state.d5.rows.map((r,i)=>'<tr><td>'+(i+1)+'. '+esc(r.text||'—')+'</td><td>'+esc(r.target||'—')+'</td><td>'+esc(r.proposer||'—')+'</td><td>'+esc(r.owner||'—')+'</td><td>'+esc(r.due||'—')+'</td><td>'+esc(r.status||'—')+'</td><td>'+fullReportEv(r.evidence)+'</td><td>'+fullReportJd(r.jd)+'</td></tr>').join(''):'<tr><td colspan="8" class="fr-miss">未填写</td></tr>')+'</tbody></table>');
+
+  let d6='<p>人工结论：<b>'+esc(state.d6.conclusion||'未填')+'</b> · 验证人：'+esc(state.d6.verifier||'—')+'</p>';
+  if(state.d6.check)d6+='<p class="fr-small">证据检查：已交 '+state.d6.check.submitted+' 项，缺 '+state.d6.check.missing+' 项，不对题 '+state.d6.check.mismatch+' 项。</p>';
+  d6+=(state.d6.groups||[]).map((g,gi)=>'<div class="fr-layer"><b>措施 '+(gi+1)+'：'+esc(g.measureText||'—')+'</b><div class="fr-small">对应根因：'+esc(g.rootText||'—')+'</div>'+
+    (g.items||[]).map(it=>'<div class="fr-small">· '+esc(it.label||'—')+'：'+esc(it.standard||'')+'（'+fullReportEv(it.evidence)+'）</div>').join('')+'</div>').join('');
+  h+=fullReportSection(6,'措施验证',d6);
+
+  let d7='<p>变更单号：'+esc(state.d7.meta.changeNo||'—')+' · 生效日期：'+esc(state.d7.meta.effective||'—')+' · 横向展开：'+esc(state.d7.meta.horizontal||'—')+' · 客户批准：'+esc(state.d7.meta.customer||'—')+'</p>';
+  d7+='<table><thead><tr><th>类别</th><th>标准化成果</th><th>要求</th><th>提出人</th><th>责任人</th><th>改版实物</th></tr></thead><tbody>'+
+    (state.d7.items.length?state.d7.items.map(it=>'<tr><td>'+esc(it.cat||'—')+'</td><td>'+esc(it.label||'—')+'</td><td>'+esc(it.desc||'—')+'</td><td>'+esc(it.proposer||'—')+'</td><td>'+esc(it.owner||'—')+'</td><td>'+fullReportEv(it.evidence)+'</td></tr>').join(''):'<tr><td colspan="6" class="fr-miss">未分析</td></tr>')+'</tbody></table>';
+  if(state.d7.check&&state.d7.check.issues)d7+='<ul class="fr-issues">'+state.d7.check.issues.map(x=>'<li><b>'+esc(x.title)+'</b>：'+esc(x.detail)+'</li>').join('')+'</ul>';
+  h+=fullReportSection(7,'标准化',d7);
+
+  let d8='<h3>团队贡献</h3><p>'+esc(state.d8.contribution.text||'—')+'</p><h3>经验教训</h3><p>'+esc(state.d8.lessons.text||'—')+'</p><h3>待观察说明</h3><p>'+esc(state.d8.observation.text||'—')+'</p><h3>历史同类问题</h3><p>'+esc(state.d8.history||'—')+'</p>';
+  if(state.d8.report){d8+='<h3>整份报告判断：'+esc(state.d8.report.label)+'</h3><ul class="fr-issues">'+(state.d8.report.issues||[]).map(x=>'<li><b>D'+x.stage+' · '+esc(x.title)+'</b>：'+esc(x.detail)+'</li>').join('')+'</ul>';}
+  d8+='<p class="fr-small">关闭确认人：'+esc(state.d8.closer||'—')+' · 关闭日期：'+esc(state.d8.date||'—')+'</p>';
+  h+=fullReportSection(8,'关闭',d8);
+  h+='<p class="fr-small">由 8D Copilot MVP 导出；判断结论不替代人工签批。附件只保留文件名/大小/时间，不含原文件。</p>';
+  return h;
+}
+function exportFullReport(){
+  const w=window.open('','_blank');
+  if(!w){toast('浏览器拦住了导出窗口，请允许弹窗后重试。');return;}
+  const title=(state.meta.name||'未命名 8D')+' · 8D 报告';
+  const css=document.querySelector('style').textContent+
+    'body{background:#fff;padding:24px;font-size:12px;color:#263244}.fr-head{border-bottom:2px solid #1F3A5F;padding-bottom:10px;margin-bottom:16px}.fr-head h1{font-size:24px;color:#172033}.fr-meta{font-size:11px;color:#6B7A8C;margin-top:4px}.fr-section{margin:16px 0;break-inside:avoid}.fr-section h2{font-size:15px;color:#1F3A5F;border-left:3px solid #B98A3E;padding-left:8px;margin-bottom:8px}.fr-section h3{font-size:12px;color:#1F3A5F;margin:10px 0 4px}table{width:100%;border-collapse:collapse;margin:6px 0}th,td{border:1px solid #DFE5ED;padding:5px 6px;font-size:10.5px;vertical-align:top;text-align:left}th{background:#F6F8FB;color:#1F3A5F}.fr-small{font-size:10px;color:#6B7A8C;margin-top:3px}.fr-q{color:#6B7A8C}.fr-miss{color:#B23B3B}.fr-layer{border-top:1px solid #EBEFF5;padding:6px 0}.fr-issues{margin:6px 0 0 18px;padding:0}.fr-issues li{margin:3px 0}@media print{body{padding:0}.fr-section{break-inside:avoid}}';
+  w.document.open();
+  w.document.write('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+fullReportHtml()+'</body></html>');
+  w.document.close();
+  setTimeout(()=>{try{w.focus();w.print();}catch(e){}},400);
+}
+function exportReportPdf(){
+  if(!state.d8.report){toast('先点一次“判断整份报告”，再导出。');return;}
+  const win=window.open('','_blank');
+  if(!win){toast('浏览器拦住了导出窗口，请允许弹窗后重试。');return;}
+  const title=state.meta.name||'未命名 8D';
+  const meta=[state.meta.id||'8D-—','判断时间 '+(state.d8.report.at||nowStamp())].join(' · ');
+  const css=document.querySelector('style').textContent;
+  win.document.open();
+  win.document.write('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>'+esc(title)+' · 8D 判断结论</title><style>'+css+
+    'body{background:#fff;padding:24px}.print-page{max-width:900px;margin:0 auto}.print-head{border-bottom:2px solid var(--navy);padding-bottom:10px;margin-bottom:18px}.print-head h1{font-size:24px;color:var(--ink)}.print-head p{font-size:12px;color:var(--muted);margin-top:4px}.goto{display:none!important}@media print{body{padding:0}.print-page{max-width:none}}</style></head><body><div class="print-page"><div class="print-head"><h1>'+esc(title)+' · 8D 判断结论</h1><p>'+esc(meta)+'</p><p>8D Copilot · 整份报告判断结论（不含原始填写全文；不替代人工签批）</p></div>'+reportHtml()+'</div></body></html>');
+  win.document.close();
+  setTimeout(()=>{try{win.focus();win.print();}catch(e){}},400);
+}
+function reportHtml(){
+  const r=state.d8.report;if(!r)return '';
+  const sevName={3:'阻断',2:'需补',1:'提示'};
+  const shown=r.issues.slice(0,8),hidden=r.issues.slice(8);
+  const issueHtml=x=>'<div class="issue sev-'+x.sev+'"><div class="issue-top"><span class="sev">'+sevName[x.sev]+'</span><span class="stage-pill">D'+x.stage+'</span><b>'+esc(x.title)+'</b></div><p>'+esc(x.detail)+'</p><button class="goto" onclick="go('+x.stage+')">去 D'+x.stage+' 看</button></div>';
+  return '<div class="report-verdict '+r.cls+'"><div class="rv-top"><span>'+r.label+'</span><em>'+r.at+'</em></div><p>'+r.text+'</p></div>'+
+    (r.issues.length?'<div class="issue-list">'+shown.map(issueHtml).join('')+'</div>':'<div class="gate ok"><b>未发现</b><span>阻断项和需补项都没有；仍由人做关闭确认。</span></div>')+
+    (hidden.length?'<details class="more"><summary>其余 '+hidden.length+' 条（折叠）</summary><div class="issue-list">'+hidden.map(issueHtml).join('')+'</div></details>':'');
+}
+
+/* ============ 附件 ============ */
+function evBlock(path,cid,list,label){
+  const arr=list||[];
+  return '<div class="ev-block"><div class="ev-head"><span>'+(label||'附件')+'</span><label class="upload">+ 上传<input type="file" multiple accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" onchange="addFiles(\''+path+'\',this)"></label></div><div class="ev-list" id="'+cid+'">'+evChips(path,arr)+'</div></div>';
+}
+function evChips(path,list){
+  if(!list||!list.length)return '<span class="ev-empty">未上传</span>';
+  return list.map((f,i)=>'<span class="file-chip" title="'+esc(f.name)+' · 文件 '+fmtDT(f.fileTime)+' · 上传 '+(f.uploadedAt||'—')+'"><span class="file-name">'+esc(f.name)+'</span><span class="file-sub">'+fmtSize(f.size)+' · 文件 '+fmtDT(f.fileTime)+' · 上传 '+(f.uploadedAt||'—')+'</span><button onclick="removeFile(\''+path+'\','+i+')" title="移除">×</button></span>').join('');
+}
+function addFiles(path,input){
+  const arr=get(path);
+  if(!arr){toast('附件位置状态异常，请刷新重试。');return;}
+  const n=input.files.length;
+  for(const f of input.files)arr.push({name:f.name,size:f.size,fileTime:f.lastModified,uploadedAt:nowStamp()});
+  input.value='';
+  invalidateByPath(path);markDirty();renderStage();toast('已上传 '+n+' 个附件。');
+}
+function removeFile(path,i){
+  const arr=get(path);if(!arr)return;
+  arr.splice(i,1);invalidateByPath(path);markDirty();renderStage();toast('已移除附件。');
+}
+function invalidateByPath(path){
+  if(path.startsWith('d6.')){state.d6.check=null;return;}
+  if(path.startsWith('d7.')){state.d7.check=null;return;}
+  if(path.startsWith('d2.')){
+    const m=path.match(/^d2\.fields\.(\w+)\./);if(m&&state.d2.fields[m[1]])state.d2.fields[m[1]].jd=null;
+    return;
+  }
+  if(path.startsWith('d3.')){
+    const m=path.match(/^d3\.rows\.(\d+)\./);if(m&&state.d3.rows[+m[1]])state.d3.rows[+m[1]].jd=null;
+    return;
+  }
+  if(path.startsWith('d4.')){
+    if(path.startsWith('d4.outputs.')){state.d4.toolsJd=null;return;}
+    const m=path.match(/^d4\.([ab])\.layers\.(\d+)\./);
+    if(m&&state.d4[m[1]].layers[+m[2]]){
+      state.d4[m[1]].layers[+m[2]].jd=null;
+      state.d4[m[1]].jd=null;
+    }
+    return;
+  }
+  if(path.startsWith('d5.')){
+    const m=path.match(/^d5\.rows\.(\d+)\./);if(m&&state.d5.rows[+m[1]])state.d5.rows[+m[1]].jd=null;
+  }
+}
+
+/* ============ 候选 / 工具 ============ */
+function candHtml(list,fnName,arg){
+  return '<div class="cand-panel"><div class="cand-title">AI 给了 '+list.length+' 条候选（最多 3 条）<span>采用会替换当前内容；生成不评价你原来写的</span></div>'+
+    list.map((c,i)=>'<div class="cand"><div class="cand-main"><div class="cand-text">'+esc(c.text)+'</div><div class="cand-meta">依据：'+esc(c.basis)+'</div></div><button class="btn btn-gen btn-sm" onclick="'+fnName+'(\''+arg+'\','+i+')">采用这条</button></div>').join('')+'</div>';
+}
+
+/* ============ 初始化 ============ */
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+function onReportName(el){
+  state.meta.name=el.value;
+  state.meta.updatedAt=nowISO();
+  persist();
+  if(historyOpen)renderHistory();
+}
+function fmtHist(iso){
+  const d=new Date(iso);if(isNaN(d.getTime()))return '—';
+  return d.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function toggleHistory(){
+  historyOpen=!historyOpen;
+  const m=document.getElementById('historyMask');m.hidden=!historyOpen;
+  if(historyOpen){renderHistory();setTimeout(()=>{const i=document.getElementById('newReportName');if(i)i.focus();},60);}
+}
+function closeHistory(){historyOpen=false;document.getElementById('historyMask').hidden=true;}
+function renderHistory(){
+  const list=library.slice().sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+  document.getElementById('historyList').innerHTML=list.length?list.map(e=>{
+    const st=e.state||{},cur=e.id===state.meta.id;
+    return '<div class="hist-item '+(cur?'current':'')+'"><div class="hist-main"><b>'+esc(e.name||'未命名 8D')+'</b><span>'+esc(e.id)+' · D'+(st.stage||2)+' · '+esc(fmtHist(e.updatedAt))+(cur?' · 当前':'')+'</span></div><div class="hist-actions"><button class="btn btn-ghost btn-sm" onclick="openReport(\''+esc(e.id)+'\')">打开</button><button class="btn btn-ghost btn-sm" onclick="deleteReport(\''+esc(e.id)+'\')">删除</button></div></div>';
+  }).join(''):'<div class="hist-empty">还没有历史 8D。上面填个名字，新建一份。</div>';
+}
+function createReport(template){
+  const input=document.getElementById('newReportName');
+  const name=(input&&input.value||'').trim();
+  persist();
+  let s=template==='demo'?freshState():blankState(name);
+  if(name)s.meta.name=name;
+  s.meta.id=newReportId();s.meta.createdAt=nowISO();s.meta.updatedAt=nowISO();
+  state=s;persist();
+  if(input)input.value='';
+  closeHistory();renderStage();
+  toast('已新建：'+state.meta.name);
+}
+function openReport(id){
+  if(id===state.meta.id){closeHistory();return;}
+  persist();
+  const e=library.find(x=>x.id===id);if(!e)return;
+  state=cloneState(e.state);ensureMeta(state,e.name);
+  state.meta.id=e.id;state.meta.name=e.name||state.meta.name;
+  localStorage.setItem(LIB_KEY+'.current',e.id);
+  closeHistory();renderStage();toast('已打开：'+state.meta.name);
+}
+function deleteReport(id){
+  const e=library.find(x=>x.id===id);if(!e)return;
+  if(!confirm('删除“'+(e.name||'未命名 8D')+'”？删除后不能恢复。'))return;
+  persist();
+  library=library.filter(x=>x.id!==id);
+  try{localStorage.setItem(LIB_KEY,JSON.stringify(library));}catch(e){}
+  if(id===state.meta.id){
+    if(library.length){state=cloneState(library[0].state);ensureMeta(state,library[0].name);state.meta.id=library[0].id;state.meta.name=library[0].name||state.meta.name;}
+    else state=blankState('未命名 8D');
+    persist();renderStage();
+  }
+  renderHistory();toast('已删除。');
+}
+function resetDemo(){
+  const old=state.meta;
+  if(!confirm('把当前这份 8D 重置为示例数据？当前填写、附件和判断记录都会清空，其他历史 8D 不受影响。'))return;
+  const s=freshState();
+  s.meta.id=old.id;s.meta.createdAt=old.createdAt;s.meta.name='支柱扁位漏加工（示例）';
+  state=s;persist();renderStage();toast('当前 8D 已重置为示例。');
+}
+function updateAIPill(){
+  const p=document.getElementById('aiPill');if(!p)return;
+  p.classList.toggle('ai-on',AI.available);
+  p.classList.toggle('ai-off',!AI.available);
+  p.classList.toggle('ai-busy',AI.busy);
+  p.textContent=AI.busy?'DeepSeek 生成中…':AI.available?'DeepSeek 已连接 · '+AI.model:'本地规则 · 未接 DeepSeek';
+}
+async function checkAI(){
+  try{
+    const r=await fetch('/api/health',{cache:'no-store'});
+    if(!r.ok)throw new Error('no server');
+    const j=await r.json();
+    AI.available=!!j.ai;AI.model=j.model||'deepseek-chat';
+  }catch(e){AI.available=false;}
+  updateAIPill();
+}
+function aiHelp(){
+  if(AI.available){toast('DeepSeek 已连接；生成和判断会优先调用模型，失败时保留本地规则结果。');return;}
+  alert('当前是本地规则模式，未连接 DeepSeek。\n\n接入步骤：\n1. 双击 MVP_v3.1 目录下的“连接DeepSeek.bat”。\n2. 把 Key 填到 DEEPSEEK_API_KEY= 后面，保存并关闭记事本。\n3. 等待服务启动，打开 http://127.0.0.1:8790 。\n\n也可以手动编辑 .env 后双击 start.bat。Key 只放在本机服务端，不会写进 HTML。');
+}
+function parseAIJson(raw){
+  const s=String(raw||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/```$/,'').trim();
+  const a=s.indexOf('{'),b=s.lastIndexOf('}');
+  if(a<0||b<a)throw new Error('DeepSeek 没有返回 JSON');
+  return JSON.parse(s.slice(a,b+1));
+}
+function aiContext(){
+  const f=state.d2.fields;
+  const d2=D2_FIELDS.map(x=>x.label+'：'+(f[x.key]?f[x.key].text:'')).join('\n');
+  const d3=state.d3.rows.map((r,i)=>(i+1)+'. '+r.text+'（'+(r.status||'')+'）').join('\n');
+  const d4=['a','b'].map(t=>t.toUpperCase()+'链：'+state.d4[t].layers.map((l,i)=>(i+1)+'. '+l.answer).join(' / ')).join('\n');
+  const d5=state.d5.rows.map((r,i)=>(i+1)+'. '+r.text+'（针对 '+(r.target||'未挂根因')+'，'+(r.status||'')+'）').join('\n');
+  return ('报告：'+(state.meta.name||'未命名 8D')+'\nD2：\n'+d2+'\nD3：\n'+d3+'\nD4：\n'+d4+'\nD5：\n'+d5).slice(0,7000);
+}
+async function callAI(messages,opts){
+  opts=opts||{};
+  if(!AI.available)throw new Error('DeepSeek 未连接');
+  AI.busy=true;updateAIPill();
+  try{
+    const r=await fetch('/api/deepseek',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,json:opts.json!==false,max_tokens:opts.max_tokens||900})});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||('DeepSeek HTTP '+r.status));
+    if(!data.content)throw new Error('DeepSeek 返回为空');
+    return data.content;
+  }finally{AI.busy=false;updateAIPill();}
+}
+async function aiCandidates(stage,label,current,extra){
+  const sys='你是 8D Copilot 的生成助手。只给候选，不评价用户原文，不替用户确认，不生成人名。每条候选必须说明针对了哪条已有信息。只输出 JSON。';
+  const user='阶段：'+stage+'\n字段：'+label+'\n当前内容：'+(current||'（空）')+'\n补充：'+(extra||'无')+'\n报告上下文：\n'+aiContext()+'\n\n请给 1-3 条候选，最多 3 条。严格输出：{"candidates":[{"text":"候选内容","basis":"针对哪条已有信息"}]}';
+  const raw=await callAI([{role:'system',content:sys},{role:'user',content:user}],{max_tokens:900});
+  const obj=parseAIJson(raw),arr=Array.isArray(obj.candidates)?obj.candidates:[];
+  return arr.filter(c=>c&&typeof c.text==='string'&&c.text.trim()).slice(0,3).map(c=>({text:c.text.trim(),basis:String(c.basis||'DeepSeek 生成').slice(0,160)}));
+}
+async function aiJudge(stage,target,text,extra){
+  const sys='你是 8D Copilot 的判断助手。只判断这段内容逻辑是否站得住，不改写原文，不替用户定真正根因，不判“有效”，不猜工厂情况，不生成人名。根因停在人的疏忽/漏检必须判不成立；已完成没有证据必须指出。只输出 JSON。';
+  const user='阶段：'+stage+'\n对象：'+target+'\n待判断原文：'+(text||'（空）')+'\n补充：'+(extra||'无')+'\n报告上下文：\n'+aiContext()+'\n\n严格输出：{"verdict":"不成立|部分成立|成立","reason":"引用原文说明理由","question":"一个具体追问","advice":"补什么"}';
+  const raw=await callAI([{role:'system',content:sys},{role:'user',content:user}],{max_tokens:700});
+  const o=parseAIJson(raw);
+  const verdict=/^(不成立|部分成立|成立)$/.test(o.verdict)?o.verdict:'部分成立';
+  return {verdict,reason:String(o.reason||'模型没有给出理由').slice(0,600),question:String(o.question||'请补充依据。').slice(0,400),advice:String(o.advice||'补一条数据或证据。').slice(0,400),checks:null,target};
+}
+
+function init(){
+  document.addEventListener('focusout',e=>{if(e.target.matches('input[list="peopleList"]'))refreshPersonTag(e.target);});
+  const restored=loadLibrary();
+  renderStage();
+  checkAI();
+  if(restored)setTimeout(()=>toast('已从历史库恢复上次打开的报告。'),200);
+}
+init();
+</script>
+</body>
+</html>
